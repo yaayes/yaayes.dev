@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Test Pagefind</title>
+    <link href="dist/pagefind/pagefind-ui.css" rel="stylesheet">
+</head>
+
+<body>
+    <h1>Pagefind Test</h1>
+    <div id="search"></div>
+
+    <script src="dist/pagefind/pagefind-ui.js"></script>
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('PagefindUI available:', typeof PagefindUI !== 'undefined');
+
+            if (typeof PagefindUI !== 'undefined') {
+                const ui = new PagefindUI({
+                    element: "#search",
+                    bundlePath: "dist/pagefind/"
+                });
+                console.log('Pagefind UI initialized');
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,174 @@
+---
+// Search component using Pagefind - renders results manually
+interface Props {
+  searchQuery?: string;
+}
+
+const { searchQuery = "" } = Astro.props;
+---
+
+<div class="max-w-3xl mx-auto">
+  <!-- Hidden Search Input (syncs with header) -->
+  <div class="hidden">
+    <input
+      type="text"
+      id="search-input"
+      placeholder="Search articles..."
+      class="w-full px-4 py-3 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg))] text-[rgb(var(--color-text))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-primary))] text-lg"
+    />
+  </div>
+
+  <!-- Results Count -->
+  <div
+    id="results-count"
+    class="mb-6 text-[rgb(var(--color-text))] opacity-75 hidden"
+  >
+  </div>
+
+  <!-- Search Results -->
+  <div id="search-results" class="grid gap-6"></div>
+
+  <!-- No Results Message -->
+  <div id="no-results" class="hidden text-center py-12">
+    <p class="text-[rgb(var(--color-text))] opacity-75">
+      No articles found. Try a different search term.
+    </p>
+  </div>
+
+  <!-- Loading State -->
+  <div id="loading" class="hidden text-center py-12">
+    <p class="text-[rgb(var(--color-text))] opacity-75">Searching...</p>
+  </div>
+
+  <!-- Dev Mode Fallback -->
+  <div
+    id="search-fallback"
+    class="hidden p-6 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg))] text-center"
+  >
+    <p class="text-[rgb(var(--color-text))] mb-2">
+      <strong>Search is only available in production mode.</strong>
+    </p>
+    <p class="text-sm text-[rgb(var(--color-text))] opacity-75">
+      Run <code
+        class="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 rounded text-xs"
+        >npm run build && npm run preview</code
+      > to test search functionality.
+    </p>
+  </div>
+</div>
+
+<script is:inline>
+  window.addEventListener("DOMContentLoaded", async () => {
+    const searchInput = document.getElementById("search-input");
+    const resultsContainer = document.getElementById("search-results");
+    const resultsCount = document.getElementById("results-count");
+    const noResults = document.getElementById("no-results");
+    const loading = document.getElementById("loading");
+    const fallback = document.getElementById("search-fallback");
+
+    let pagefind = null;
+    let debounceTimer = null;
+
+    // Try to load Pagefind
+    try {
+      pagefind = await import("/pagefind/pagefind.js");
+      await pagefind.options({ baseUrl: "/" });
+    } catch (e) {
+      fallback.classList.remove("hidden");
+      searchInput.disabled = true;
+      return;
+    }
+
+    // Render a single result
+    function renderResult(data) {
+      // Remove date and author from excerpt
+      let excerpt = data.excerpt || "";
+      excerpt = excerpt.replace(/\d{4}-\d{2}-\d{2}/g, ""); // Remove dates
+      excerpt = excerpt.replace(/·\s*By\s+[^<]+/g, ""); // Remove author
+      excerpt = excerpt.trim();
+
+      return `
+        <article class="result-card p-6 border border-[rgb(var(--color-border))] rounded-lg hover:border-[rgb(var(--color-primary))] transition-all">
+          <a href="${data.url}" class="block">
+            <h2 class="result-title text-xl font-bold mb-3 transition-colors">
+              ${data.meta.title || "Untitled"}
+            </h2>
+            <p class="text-[rgb(var(--color-text))] opacity-75 text-sm leading-relaxed">
+              ${excerpt}
+            </p>
+          </a>
+        </article>
+      `;
+    }
+
+    // Perform search
+    async function performSearch(query) {
+      if (!query || query.length < 2) {
+        resultsContainer.innerHTML = "";
+        resultsCount.classList.add("hidden");
+        noResults.classList.add("hidden");
+        return;
+      }
+
+      loading.classList.remove("hidden");
+      noResults.classList.add("hidden");
+
+      try {
+        const search = await pagefind.search(query);
+
+        if (search.results.length === 0) {
+          resultsContainer.innerHTML = "";
+          resultsCount.classList.add("hidden");
+          noResults.classList.remove("hidden");
+          loading.classList.add("hidden");
+          return;
+        }
+
+        // Load result data
+        const resultsData = await Promise.all(
+          search.results.slice(0, 10).map((r) => r.data()),
+        );
+
+        console.log("Results data:", resultsData);
+
+        // Render results
+        resultsContainer.innerHTML = resultsData.map(renderResult).join("");
+        resultsCount.textContent = `Found ${search.results.length} result${search.results.length === 1 ? "" : "s"}`;
+        resultsCount.classList.remove("hidden");
+        noResults.classList.add("hidden");
+      } catch (e) {
+        console.error("Search error:", e);
+        resultsContainer.innerHTML =
+          '<p class="text-red-500">Search error. Please try again.</p>';
+      }
+
+      loading.classList.add("hidden");
+    }
+
+    // Handle input
+    searchInput.addEventListener("input", (e) => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        performSearch(e.target.value.trim());
+      }, 300);
+    });
+
+    // Check for initial query from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialQuery = urlParams.get("q");
+    if (initialQuery) {
+      searchInput.value = initialQuery;
+      performSearch(initialQuery);
+    }
+
+    // Focus input
+    searchInput.focus();
+  });
+</script>
+
+<style>
+  /* When hovering the card, also apply hover style to the title */
+  :global(.result-card:hover .result-title) {
+    color: rgb(var(--color-primary)) !important;
+  }
+</style>

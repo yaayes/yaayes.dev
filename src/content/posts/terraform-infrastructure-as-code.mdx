@@ -1,0 +1,229 @@
+---
+title: "Infrastructure as Code with Terraform"
+description: "Stop clicking buttons and start writing code for your infrastructure"
+pubDate: 2026-01-10
+author: "Yassine"
+tags: ["terraform", "iac", "devops", "cloud"]
+---
+
+# Infrastructure as Code with Terraform
+
+Remember the days of manually clicking through cloud consoles to provision resources? Yeah, me neither. Let's talk about Infrastructure as Code (IaC) and why Terraform is awesome.
+
+## Why Infrastructure as Code?
+
+Think of IaC as version control for your infrastructure. Here's what you get:
+
+- **Reproducibility**: Deploy the same thing multiple times
+- **Version control**: Track changes over time
+- **Code review**: Catch mistakes before they hit production
+- **Documentation**: Your code IS your documentation
+
+## Terraform Basics
+
+Terraform uses a declarative language called HCL (HashiCorp Configuration Language). Here's a simple example:
+
+```hcl
+# Configure the AWS Provider
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
+
+provider "aws" {
+  region = "us-east-1"
+}
+
+# Create a VPC
+resource "aws_vpc" "main" {
+  cidr_block = "10.0.0.0/16"
+
+  tags = {
+    Name = "main-vpc"
+    Environment = "production"
+  }
+}
+
+# Create a subnet
+resource "aws_subnet" "public" {
+  vpc_id     = aws_vpc.main.id
+  cidr_block = "10.0.1.0/24"
+
+  tags = {
+    Name = "public-subnet"
+  }
+}
+```
+
+## The Terraform Workflow
+
+1. **Write**: Define your infrastructure in `.tf` files
+2. **Plan**: Preview changes with `terraform plan`
+3. **Apply**: Create/update resources with `terraform apply`
+4. **Destroy**: Clean up with `terraform destroy` (be careful!)
+
+```bash
+# Initialize Terraform
+terraform init
+
+# Preview changes
+terraform plan
+
+# Apply changes
+terraform apply
+
+# Destroy everything (careful!)
+terraform destroy
+```
+
+## Best Practices
+
+### 1. Use Remote State
+
+Never store state files locally. Use remote backends:
+
+```hcl
+terraform {
+  backend "s3" {
+    bucket = "my-terraform-state"
+    key    = "prod/terraform.tfstate"
+    region = "us-east-1"
+
+    # Enable state locking
+    dynamodb_table = "terraform-locks"
+    encrypt        = true
+  }
+}
+```
+
+### 2. Use Modules
+
+Don't repeat yourself. Create reusable modules:
+
+```hcl
+module "vpc" {
+  source = "./modules/vpc"
+
+  vpc_cidr = "10.0.0.0/16"
+  environment = "production"
+  availability_zones = ["us-east-1a", "us-east-1b"]
+}
+```
+
+### 3. Use Variables
+
+Make your code flexible:
+
+```hcl
+variable "instance_type" {
+  description = "EC2 instance type"
+  type        = string
+  default     = "t3.micro"
+}
+
+variable "environment" {
+  description = "Environment name"
+  type        = string
+
+  validation {
+    condition     = contains(["dev", "staging", "prod"], var.environment)
+    error_message = "Environment must be dev, staging, or prod"
+  }
+}
+
+resource "aws_instance" "app" {
+  ami           = data.aws_ami.ubuntu.id
+  instance_type = var.instance_type
+
+  tags = {
+    Environment = var.environment
+  }
+}
+```
+
+### 4. Use Outputs
+
+Make important values available:
+
+```hcl
+output "vpc_id" {
+  description = "ID of the VPC"
+  value       = aws_vpc.main.id
+}
+
+output "load_balancer_dns" {
+  description = "DNS name of the load balancer"
+  value       = aws_lb.main.dns_name
+}
+```
+
+## Common Gotchas
+
+### 1. State File Conflicts
+
+Multiple people running Terraform? You'll get conflicts. Use state locking!
+
+### 2. Credential Management
+
+Never hardcode credentials:
+
+```hcl
+# ❌ BAD
+provider "aws" {
+  access_key = "AKIAIOSFODNN7EXAMPLE"
+  secret_key = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+}
+
+# ✅ GOOD - Use environment variables or IAM roles
+provider "aws" {
+  # Credentials from environment or IAM role
+  region = var.aws_region
+}
+```
+
+### 3. Blast Radius
+
+Be careful with `terraform apply`. Use:
+
+- Workspaces for different environments
+- `-target` flag to update specific resources
+- Plan files to ensure what you're applying
+
+## Advanced Tips
+
+### Use Data Sources
+
+Query existing resources:
+
+```hcl
+data "aws_ami" "ubuntu" {
+  most_recent = true
+  owners      = ["099720109477"] # Canonical
+
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
+  }
+}
+```
+
+### Use Terraform Cloud
+
+For teams, consider Terraform Cloud for:
+
+- Remote state management
+- Plan/apply automation
+- Policy as code (Sentinel)
+- Private module registry
+
+## Conclusion
+
+Terraform turns infrastructure management from a manual chore into a codified, reviewable, and automated process. Start small, use modules, and always run `terraform plan` before `apply`.
+
+Your infrastructure will thank you (and so will your teammates).
+
+Happy terraforming! 🌍

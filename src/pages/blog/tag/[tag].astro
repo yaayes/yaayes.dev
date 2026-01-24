@@ -1,0 +1,93 @@
+---
+import Layout from "../../../layouts/Layout.astro";
+import Header from "../../../components/Header.astro";
+import { getCollection } from "astro:content";
+
+export async function getStaticPaths() {
+  const allPosts = await getCollection("posts");
+  const allTags = [...new Set(allPosts.flatMap((post) => post.data.tags))];
+
+  return allTags.map((tag) => ({
+    params: { tag },
+  }));
+}
+
+const { tag } = Astro.params;
+
+const allPosts = (await getCollection("posts"))
+  .filter((post) => !post.data.draft && post.data.tags.includes(tag))
+  .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+---
+
+<Layout
+  title={`Posts tagged with "${tag}"`}
+  description={`All articles about ${tag}`}
+>
+  <div data-pagefind-ignore>
+    <Header />
+
+    <main class="max-w-5xl mx-auto px-4 py-12">
+      <div class="mb-8">
+        <a
+          href="/blog"
+          class="text-[rgb(var(--color-primary))] hover:underline mb-4 inline-block"
+        >
+          ← Back to all posts
+        </a>
+        <h1 class="text-4xl md:text-5xl font-bold mb-4">
+          Posts tagged with <span class="text-[rgb(var(--color-primary))]"
+            >{tag}</span>
+        </h1>
+        <p class="text-[rgb(var(--color-text))] opacity-75">
+          {allPosts.length}
+          {allPosts.length === 1 ? "post" : "posts"} found
+        </p>
+      </div>
+
+      <!-- Posts Grid -->
+      <div class="grid gap-8">
+        {
+          allPosts.length > 0 ? (
+            allPosts.map((post) => (
+              <article class="card group">
+                <a href={`/blog/${post.slug}`} class="block">
+                  <h2 class="text-2xl font-bold mb-4 group-hover:text-[rgb(var(--color-primary))] transition-colors">
+                    {post.data.title}
+                  </h2>
+                  <p class="text-[rgb(var(--color-text))] opacity-75 mb-5 leading-relaxed">
+                    {post.data.description}
+                  </p>
+                  <div class="flex flex-wrap items-center gap-4 text-sm text-[rgb(var(--color-text))] opacity-60">
+                    <time datetime={post.data.pubDate.toISOString()}>
+                      {post.data.pubDate.toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </time>
+                    {post.data.tags.length > 0 && (
+                      <div class="flex gap-2">
+                        {post.data.tags.map((t) => (
+                          <a
+                            href={`/blog/tag/${t}`}
+                            class="px-2 py-1 border border-[rgb(var(--color-border))] rounded text-xs hover:bg-[rgb(var(--color-primary))]/10 transition-colors"
+                          >
+                            #{t}
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </a>
+              </article>
+            ))
+          ) : (
+            <p class="text-[rgb(var(--color-text))] opacity-75">
+              No posts found with this tag.
+            </p>
+          )
+        }
+      </div>
+    </main>
+  </div>
+</Layout>

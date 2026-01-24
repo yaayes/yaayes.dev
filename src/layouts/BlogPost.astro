@@ -1,0 +1,251 @@
+---
+import type { CollectionEntry } from "astro:content";
+import Layout from "./Layout.astro";
+import Header from "../components/Header.astro";
+
+interface Props {
+  post: CollectionEntry<"posts">;
+}
+
+const { post } = Astro.props;
+const { Content } = await post.render();
+---
+
+<Layout title={post.data.title} description={post.data.description}>
+  <Header />
+
+  <main class="max-w-3xl mx-auto px-4 py-12">
+    <article data-pagefind-body>
+      <!-- Post Header -->
+      <header class="mb-8">
+        <h1 class="text-4xl md:text-5xl font-bold mb-4">{post.data.title}</h1>
+        <p class="text-xl text-[rgb(var(--color-text))] opacity-75 mb-4">
+          {post.data.description}
+        </p>
+
+        <div
+          class="flex flex-wrap items-center gap-4 text-sm text-[rgb(var(--color-text))] opacity-60"
+        >
+          <time datetime={post.data.pubDate.toISOString()}>
+            {
+              post.data.pubDate.toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })
+            }
+          </time>
+
+          {
+            post.data.updatedDate && (
+              <span>
+                · Updated{" "}
+                {post.data.updatedDate.toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </span>
+            )
+          }
+
+          <span>· By {post.data.author}</span>
+        </div>
+
+        {
+          post.data.tags.length > 0 && (
+            <div class="flex flex-wrap gap-2 mt-4">
+              {post.data.tags.map((tag) => (
+                <a
+                  href={`/blog/tag/${tag}`}
+                  class="px-3 py-1 border border-[rgb(var(--color-border))] rounded-full text-sm hover:text-[rgb(var(--color-primary))] hover:border-[rgb(var(--color-primary))] transition-colors"
+                >
+                  {tag}
+                </a>
+              ))}
+            </div>
+          )
+        }
+      </header>
+
+      <!-- Post Image -->
+      {
+        post.data.image && (
+          <img
+            src={post.data.image}
+            alt={post.data.title}
+            class="w-full rounded-lg mb-8 border border-[rgb(var(--color-border))]"
+          />
+        )
+      }
+
+      <!-- Post Content -->
+      <div class="article-content">
+        <Content />
+      </div>
+
+      <!-- Add copy buttons to code blocks -->
+      <script>
+        document.addEventListener("DOMContentLoaded", () => {
+          const codeBlocks = document.querySelectorAll("pre");
+          codeBlocks.forEach((block) => {
+            const wrapper = document.createElement("div");
+            wrapper.className = "relative group";
+            block.parentNode?.insertBefore(wrapper, block);
+            wrapper.appendChild(block);
+
+            const button = document.createElement("button");
+            button.className = "copy-button";
+            button.innerHTML = `
+              <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+              Copy
+            `;
+
+            button.addEventListener("click", async () => {
+              const code = block.querySelector("code")?.textContent || "";
+              await navigator.clipboard.writeText(code);
+              button.innerHTML = `
+                <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                Copied!
+              `;
+              setTimeout(() => {
+                button.innerHTML = `
+                  <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  Copy
+                `;
+              }, 2000);
+            });
+
+            wrapper.appendChild(button);
+          });
+        });
+      </script>
+
+      <!-- Reactions Section -->
+      <div class="mt-12 pt-8 border-t border-[rgb(var(--color-border))]">
+        <h3 class="text-lg font-semibold mb-4">What did you think?</h3>
+        <div id="reactions" class="flex gap-4">
+          <button
+            data-reaction="like"
+            class="reaction-btn flex items-center gap-2 px-4 py-2 rounded-lg border border-[rgb(var(--color-border))] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          >
+            <span class="text-2xl">👍</span>
+            <span class="reaction-count">0</span>
+          </button>
+          <button
+            data-reaction="heart"
+            class="reaction-btn flex items-center gap-2 px-4 py-2 rounded-lg border border-[rgb(var(--color-border))] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          >
+            <span class="text-2xl">❤️</span>
+            <span class="reaction-count">0</span>
+          </button>
+          <button
+            data-reaction="celebrate"
+            class="reaction-btn flex items-center gap-2 px-4 py-2 rounded-lg border border-[rgb(var(--color-border))] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          >
+            <span class="text-2xl">🎉</span>
+            <span class="reaction-count">0</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Comments Section with giscus -->
+      <div class="mt-12 pt-8 border-t border-[rgb(var(--color-border))]">
+        <h3 class="text-2xl font-bold mb-6">Comments</h3>
+        <div
+          class="giscus"
+          data-repo="YOUR_GITHUB_USERNAME/YOUR_REPO"
+          data-repo-id="YOUR_REPO_ID"
+          data-category="General"
+          data-category-id="YOUR_CATEGORY_ID"
+          data-mapping="pathname"
+          data-strict="0"
+          data-reactions-enabled="1"
+          data-emit-metadata="0"
+          data-input-position="top"
+          data-theme="preferred_color_scheme"
+          data-lang="en"
+          data-loading="lazy"
+          crossorigin="anonymous"
+          async
+        >
+        </div>
+      </div>
+    </article>
+  </main>
+
+  <!-- Reactions Script -->
+  <script define:vars={{ postSlug: post.slug }}>
+    const WORKER_URL = "https://YOUR_WORKER_URL";
+
+    // Load reactions on page load
+    async function loadReactions() {
+      try {
+        const response = await fetch(`${WORKER_URL}/reactions/${postSlug}`);
+        if (response.ok) {
+          const data = await response.json();
+          updateReactionCounts(data.reactions || {});
+        }
+      } catch (error) {
+        console.error("Failed to load reactions:", error);
+      }
+    }
+
+    // Update reaction counts in UI
+    function updateReactionCounts(reactions) {
+      Object.entries(reactions).forEach(([type, count]) => {
+        const button = document.querySelector(`[data-reaction="${type}"]`);
+        if (button) {
+          const countEl = button.querySelector(".reaction-count");
+          if (countEl) countEl.textContent = count;
+        }
+      });
+    }
+
+    // Handle reaction button clicks
+    document.querySelectorAll(".reaction-btn").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const reactionType = button.dataset.reaction;
+
+        // Check if user already reacted (stored in localStorage)
+        const storageKey = `reaction_${postSlug}_${reactionType}`;
+        if (localStorage.getItem(storageKey)) {
+          alert("You already reacted with this!");
+          return;
+        }
+
+        try {
+          const response = await fetch(`${WORKER_URL}/reactions/${postSlug}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ reaction: reactionType }),
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            updateReactionCounts(data.reactions);
+            localStorage.setItem(storageKey, "true");
+
+            // Visual feedback
+            button.classList.add("animate-pulse");
+            setTimeout(() => button.classList.remove("animate-pulse"), 500);
+          }
+        } catch (error) {
+          console.error("Failed to add reaction:", error);
+        }
+      });
+    });
+
+    // Load reactions when page loads
+    loadReactions();
+  </script>
+
+  <!-- giscus Script -->
+  <script src="https://giscus.app/client.js" async></script>
+</Layout>

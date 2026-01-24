@@ -1,0 +1,170 @@
+---
+title: "CI/CD Pipeline Best Practices"
+description: "Learn how to build robust and efficient CI/CD pipelines that don't make you want to cry"
+pubDate: 2026-01-20
+author: "Yassine"
+tags: ["cicd", "devops", "automation", "best-practices"]
+---
+
+# CI/CD Pipeline Best Practices
+
+Let's talk about CI/CD pipelines. You know, those things that either save your life or make you question your career choices at 2 AM.
+
+## The Golden Rules
+
+After breaking production one too many times, I've learned these golden rules:
+
+### 1. Keep Your Pipeline Fast
+
+Nobody likes waiting 45 minutes for tests to run. Here's how to speed things up:
+
+- **Parallelize tests**: Run independent tests concurrently
+- **Cache dependencies**: Don't download the internet every time
+- **Use incremental builds**: Only build what changed
+- **Split large test suites**: Break them into smaller, faster chunks
+
+```yaml
+# GitHub Actions example
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        test-suite: [unit, integration, e2e]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+      - name: Run ${{ matrix.test-suite }} tests
+        run: npm run test:${{ matrix.test-suite }}
+```
+
+### 2. Fail Fast, Fail Loud
+
+Don't wait until the end to find out something went wrong. The earlier you catch issues, the better:
+
+```bash
+#!/bin/bash
+set -e  # Exit on any error
+
+# Linting
+echo "Running linters..."
+npm run lint || exit 1
+
+# Type checking
+echo "Type checking..."
+npm run type-check || exit 1
+
+# Tests
+echo "Running tests..."
+npm test || exit 1
+
+echo "✅ All checks passed!"
+```
+
+### 3. Environment Parity
+
+Your staging environment should be as close to production as possible. Use the same:
+
+- Operating system
+- Runtime versions
+- Database versions
+- Configuration management
+
+### 4. Automated Rollbacks
+
+Things will break. Accept it. Plan for it.
+
+```yaml
+deploy:
+  steps:
+    - name: Deploy
+      run: ./deploy.sh
+    - name: Health check
+      run: ./health-check.sh
+    - name: Rollback on failure
+      if: failure()
+      run: ./rollback.sh
+```
+
+## Testing Strategies
+
+### The Test Pyramid
+
+Remember this distribution:
+
+- **70% Unit tests**: Fast, isolated, run everywhere
+- **20% Integration tests**: Test component interactions
+- **10% E2E tests**: Full user flows (expensive but valuable)
+
+### Don't Skip Tests
+
+I know, I know. You're in a hurry. But trust me:
+
+```bash
+# This is not a test strategy
+if [ "$FRIDAY" == "true" ]; then
+  echo "Skipping tests, it's Friday 🍺"
+  exit 0
+fi
+```
+
+## Security in CI/CD
+
+### Scan Everything
+
+- **Container images**: Use tools like Trivy
+- **Dependencies**: Check for known vulnerabilities
+- **Secrets**: Never commit them (use secret managers)
+
+```yaml
+- name: Scan image
+  run: |
+    docker run --rm \
+      aquasec/trivy image \
+      --severity HIGH,CRITICAL \
+      myapp:latest
+```
+
+### Secrets Management
+
+```yaml
+# ❌ BAD
+- name: Deploy
+  run: deploy.sh
+  env:
+    API_KEY: sk-1234567890abcdef
+
+# ✅ GOOD
+- name: Deploy
+  run: deploy.sh
+  env:
+    API_KEY: ${{ secrets.API_KEY }}
+```
+
+## Monitoring and Observability
+
+Your pipeline should tell you:
+
+- ✅ What passed
+- ❌ What failed
+- ⏱️ How long it took
+- 📊 Trends over time
+
+## Common Pitfalls
+
+1. **Flaky tests**: Fix or quarantine them immediately
+2. **Too many manual approvals**: Automate what you can
+3. **Ignoring failed builds**: Treat them like production outages
+4. **No rollback strategy**: Always have a plan B
+
+## Conclusion
+
+Building a good CI/CD pipeline is an iterative process. Start simple, measure everything, and continuously improve. Your future self (and your team) will thank you.
+
+Remember: A good pipeline is one that you trust to deploy on Friday afternoon. If you're not there yet, keep improving!
+
+🚀 Happy deploying!

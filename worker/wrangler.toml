@@ -1,0 +1,24 @@
+name = "blog-worker"
+main = "index.js"
+compatibility_date = "2024-01-01"
+
+# KV namespace binding
+kv_namespaces = [
+  { binding = "KV", id = "YOUR_KV_NAMESPACE_ID" }
+]
+
+# Cron trigger for updating popular posts (runs every Sunday at midnight)
+[triggers]
+crons = ["0 0 * * 0"]
+
+# Environment variables (set these via wrangler secret or dashboard)
+[vars]
+AWS_REGION = "us-east-1"
+SES_FROM_EMAIL = "noreply@yourdomain.com"
+SES_TO_EMAIL = "your@email.com"
+CLOUDFLARE_ZONE_ID = "YOUR_ZONE_ID"
+
+# Secrets (set with: wrangler secret put <NAME>)
+# - AWS_ACCESS_KEY_ID
+# - AWS_SECRET_ACCESS_KEY
+# - CLOUDFLARE_API_TOKEN

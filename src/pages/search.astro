@@ -1,0 +1,37 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Header from "../components/Header.astro";
+import Search from "../components/Search.astro";
+---
+
+<Layout title="Search" description="Search the blog">
+  <Header />
+
+  <main class="max-w-5xl mx-auto px-4 py-12">
+    <div class="max-w-3xl mx-auto">
+      <h1 class="text-4xl md:text-5xl font-bold mb-4">Search</h1>
+
+      <p
+        id="search-description"
+        class="text-[rgb(var(--color-text))] opacity-75 mb-8"
+      >
+        Enter a search term in the header to find articles.
+      </p>
+    </div>
+
+    <!-- Search Results -->
+    <Search />
+  </main>
+</Layout>
+
+<script>
+  // Update page title and description based on URL query
+  const searchQuery =
+    new URLSearchParams(window.location.search).get("q") || "";
+  const description = document.getElementById("search-description");
+
+  if (searchQuery && description) {
+    document.title = `Search results for "${searchQuery}" | Search`;
+    description.innerHTML = `Results for: <strong class="text-[rgb(var(--color-primary))]">"${searchQuery}"</strong>`;
+  }
+</script>

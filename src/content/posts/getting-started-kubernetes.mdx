@@ -1,0 +1,90 @@
+---
+title: "Getting Started with Kubernetes"
+description: "A beginner's guide to understanding Kubernetes and deploying your first cluster"
+pubDate: 2026-01-15
+author: "Yassine"
+tags: ["kubernetes", "devops", "containers", "tutorial"]
+---
+
+# Getting Started with Kubernetes
+
+Welcome to the world of Kubernetes! If you're reading this, you've probably heard the buzz about K8s (yes, that's how cool kids write it) and wondered what all the fuss is about.
+
+## What is Kubernetes?
+
+Kubernetes is an open-source container orchestration platform that automates the deployment, scaling, and management of containerized applications. Think of it as a really smart robot that manages your containers so you don't have to wake up at 3 AM to restart crashed services.
+
+## Why Kubernetes?
+
+Here are a few reasons why Kubernetes has taken over the DevOps world:
+
+- **Automatic scaling**: Your app can grow and shrink based on demand
+- **Self-healing**: Containers that crash are automatically restarted
+- **Load balancing**: Traffic is distributed across your containers
+- **Rolling updates**: Deploy new versions without downtime
+
+## Your First Deployment
+
+Let's create a simple deployment. Here's a basic example:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      containers:
+        - name: my-app
+          image: nginx:latest
+          ports:
+            - containerPort: 80
+```
+
+This YAML file tells Kubernetes to:
+
+1. Create 3 replicas of your app
+2. Use the nginx image
+3. Expose port 80
+
+## Common Commands
+
+Here are some essential kubectl commands you'll use daily:
+
+```bash
+# Get all pods
+kubectl get pods
+
+# View logs
+kubectl logs <pod-name>
+
+# Execute commands in a pod
+kubectl exec -it <pod-name> -- /bin/bash
+
+# Apply configuration
+kubectl apply -f deployment.yaml
+
+# Delete resources
+kubectl delete -f deployment.yaml
+```
+
+## Tips for Beginners
+
+1. **Start small**: Don't try to migrate your entire infrastructure on day one
+2. **Use namespaces**: Keep your resources organized
+3. **Monitor everything**: Set up proper logging and monitoring
+4. **Learn YAML**: You'll be writing a lot of it
+
+## Conclusion
+
+Kubernetes might seem overwhelming at first, but once you understand the core concepts, it becomes an incredibly powerful tool in your DevOps arsenal. Start with simple deployments and gradually work your way up to more complex scenarios.
+
+Happy containerizing! 🚢

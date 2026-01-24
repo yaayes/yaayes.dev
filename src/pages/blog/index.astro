@@ -1,0 +1,97 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Header from "../../components/Header.astro";
+import Search from "../../components/Search.astro";
+import { getCollection } from "astro:content";
+
+const allPosts = (await getCollection("posts"))
+  .filter((post) => !post.data.draft)
+  .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+
+// Get search query from URL
+const searchQuery = Astro.url.searchParams.get("q") || "";
+
+// Get unique tags
+const allTags = [...new Set(allPosts.flatMap((post) => post.data.tags))].sort();
+---
+
+<Layout
+  title="Blog"
+  description="All articles about software development and DevOps"
+>
+  <Header />
+
+  <main class="max-w-5xl mx-auto px-4 py-12">
+    <h1 class="text-4xl md:text-5xl font-bold mb-12">All Articles</h1>
+
+    <!-- Search -->
+    <Search searchQuery={searchQuery} />
+
+    <!-- Tags Filter -->
+    {
+      allTags.length > 0 && (
+        <div class="mb-10">
+          <h2 class="text-lg font-semibold mb-4">Filter by tag:</h2>
+          <div class="flex flex-wrap gap-2">
+            <a
+              href="/blog"
+              class="px-3 py-1 rounded-full border border-[rgb(var(--color-border))] hover:text-[rgb(var(--color-primary))] hover:border-[rgb(var(--color-primary))] transition-colors"
+            >
+              All
+            </a>
+            {allTags.map((tag) => (
+              <a
+                href={`/blog/tag/${tag}`}
+                class="px-3 py-1 rounded-full border border-[rgb(var(--color-border))] hover:text-[rgb(var(--color-primary))] hover:border-[rgb(var(--color-primary))] transition-colors"
+              >
+                {tag}
+              </a>
+            ))}
+          </div>
+        </div>
+      )
+    }
+
+    <!-- Posts Grid -->
+    <div class="grid gap-8">
+      {
+        allPosts.length > 0 ? (
+          allPosts.map((post) => (
+            <article class="card group">
+              <a href={`/blog/${post.slug}`} class="block">
+                <h2 class="text-2xl font-bold mb-4 group-hover:text-[rgb(var(--color-primary))] transition-colors">
+                  {post.data.title}
+                </h2>
+                <p class="text-[rgb(var(--color-text))] opacity-75 mb-5 leading-relaxed">
+                  {post.data.description}
+                </p>
+                <div class="flex flex-wrap items-center gap-4 text-sm text-[rgb(var(--color-text))] opacity-60">
+                  <time datetime={post.data.pubDate.toISOString()}>
+                    {post.data.pubDate.toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </time>
+                  {post.data.tags.length > 0 && (
+                    <div class="flex gap-2">
+                      {post.data.tags.map((tag) => (
+                        <span class="px-2 py-1 border border-[rgb(var(--color-border))] rounded text-xs">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </a>
+            </article>
+          ))
+        ) : (
+          <p class="text-slate-600 dark:text-slate-400">
+            No posts yet. Check back soon!
+          </p>
+        )
+      }
+    </div>
+  </main>
+</Layout>

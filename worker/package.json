@@ -1,0 +1,11 @@
+{
+  "name": "blog-worker",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "@aws-sdk/client-ses": "^3.632.0"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}
