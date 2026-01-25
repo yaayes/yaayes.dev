@@ -5,7 +5,7 @@ account_id = "26fdcb371ad2ee973f5369f79a31f165"
 
 # KV namespace binding
 kv_namespaces = [
-  { binding = "YAAYES_DEV_BLOG", id ="2e434b85070f4b0d83caf76718877863" }
+  { binding = "KV", id ="2e434b85070f4b0d83caf76718877863" }
 ]
 
 [observability]
