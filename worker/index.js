@@ -3,10 +3,20 @@ import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    const origin = request.headers.get("Origin");
+
+    // Only allow requests from your domain
+    const allowedOrigins = [
+      "https://yaayes.dev",
+      "http://localhost:4321", // For local development
+      "http://127.0.0.1:4321",
+    ];
+
+    const isAllowed = allowedOrigins.includes(origin);
 
     // CORS headers
     const corsHeaders = {
-      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Origin": isAllowed ? origin : "https://yaayes.dev",
       "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type",
     };
