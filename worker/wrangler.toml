@@ -8,9 +8,14 @@ kv_namespaces = [
   { binding = "YAAYES_DEV_BLOG", id ="2e434b85070f4b0d83caf76718877863" }
 ]
 
+[observability]
+[observability.logs]
+enabled = true
+invocation_logs = true
+
 # Cron trigger for updating popular posts (runs every Sunday at midnight)
 [triggers]
-crons = ["0 0 * * 0"]
+crons = ["0 0 * * mon"]
 
 # Environment variables (set these via wrangler secret or dashboard)
 [vars]
