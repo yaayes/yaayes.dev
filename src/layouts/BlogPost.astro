@@ -159,16 +159,15 @@ const { Content } = await post.render();
       <div class="mt-12 pt-8 border-t border-[rgb(var(--color-border))]">
         <h3 class="text-2xl font-bold mb-6">Comments</h3>
         <div
-          class="giscus"
-          data-repo="YOUR_GITHUB_USERNAME/YOUR_REPO"
-          data-repo-id="YOUR_REPO_ID"
-          data-category="General"
-          data-category-id="YOUR_CATEGORY_ID"
-          data-mapping="pathname"
+          data-repo="yaayes/yaayes.dev"
+          data-repo-id="R_kgDORAkdoA"
+          data-category="Announcements"
+          data-category-id="DIC_kwDORAkdoM4C1Yv7"
+          data-mapping="title"
           data-strict="0"
           data-reactions-enabled="1"
           data-emit-metadata="0"
-          data-input-position="top"
+          data-input-position="bottom"
           data-theme="preferred_color_scheme"
           data-lang="en"
           data-loading="lazy"
@@ -182,7 +181,8 @@ const { Content } = await post.render();
 
   <!-- Reactions Script -->
   <script define:vars={{ postSlug: post.slug }}>
-    const WORKER_URL = "https://YOUR_WORKER_URL";
+    const WORKER_URL =
+      "https://https://blog-worker.yaayes-dev-stats-worker.workers.dev";
 
     // Load reactions on page load
     async function loadReactions() {

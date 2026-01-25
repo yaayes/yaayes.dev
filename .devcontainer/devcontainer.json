@@ -41,5 +41,6 @@
       "label": "Astro Dev Server",
       "onAutoForward": "notify"
     }
-  }
+  },
+  "runArgs": ["--env-file", "worker/.env"]
 }
