@@ -22,18 +22,6 @@ export default {
         return await handleContact(request, env, corsHeaders);
       }
 
-      // Get reactions for a post
-      if (url.pathname.startsWith("/reactions/") && request.method === "GET") {
-        const postSlug = url.pathname.split("/reactions/")[1];
-        return await getReactions(postSlug, env, corsHeaders);
-      }
-
-      // Add reaction to a post
-      if (url.pathname.startsWith("/reactions/") && request.method === "POST") {
-        const postSlug = url.pathname.split("/reactions/")[1];
-        return await addReaction(postSlug, request, env, corsHeaders);
-      }
-
       // Get popular posts
       if (url.pathname === "/popular-posts" && request.method === "GET") {
         return await getPopularPosts(env, corsHeaders);
@@ -154,47 +142,6 @@ async function handleContact(request, env, corsHeaders) {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
-}
-
-// Get reactions for a post
-async function getReactions(postSlug, env, corsHeaders) {
-  const key = `reactions:${postSlug}`;
-  const data = await env.KV.get(key);
-  const reactions = data
-    ? JSON.parse(data)
-    : { like: 0, heart: 0, celebrate: 0 };
-
-  return new Response(JSON.stringify({ reactions }), {
-    status: 200,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
-}
-
-// Add reaction to a post
-async function addReaction(postSlug, request, env, corsHeaders) {
-  const { reaction } = await request.json();
-
-  if (!["like", "heart", "celebrate"].includes(reaction)) {
-    return new Response(JSON.stringify({ error: "Invalid reaction" }), {
-      status: 400,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-
-  const key = `reactions:${postSlug}`;
-  const data = await env.KV.get(key);
-  const reactions = data
-    ? JSON.parse(data)
-    : { like: 0, heart: 0, celebrate: 0 };
-
-  reactions[reaction] = (reactions[reaction] || 0) + 1;
-
-  await env.KV.put(key, JSON.stringify(reactions));
-
-  return new Response(JSON.stringify({ reactions }), {
-    status: 200,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
 }
 
 // Get popular posts

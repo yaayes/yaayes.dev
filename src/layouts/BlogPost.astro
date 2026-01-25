@@ -1,5 +1,6 @@
 ---
 import type { CollectionEntry } from "astro:content";
+import { render } from "astro:content";
 import Layout from "./Layout.astro";
 import Header from "../components/Header.astro";
 
@@ -8,7 +9,7 @@ interface Props {
 }
 
 const { post } = Astro.props;
-const { Content } = await post.render();
+const { Content } = await render(post);
 ---
 
 <Layout title={post.data.title} description={post.data.description}>
@@ -55,7 +56,7 @@ const { Content } = await post.render();
         {
           post.data.tags.length > 0 && (
             <div class="flex flex-wrap gap-2 mt-4">
-              {post.data.tags.map((tag) => (
+              {post.data.tags.map((tag: string) => (
                 <a
                   href={`/blog/tag/${tag}`}
                   class="px-3 py-1 border border-[rgb(var(--color-border))] rounded-full text-sm hover:text-[rgb(var(--color-primary))] hover:border-[rgb(var(--color-primary))] transition-colors"
@@ -127,34 +128,6 @@ const { Content } = await post.render();
         });
       </script>
 
-      <!-- Reactions Section -->
-      <div class="mt-12 pt-8 border-t border-[rgb(var(--color-border))]">
-        <h3 class="text-lg font-semibold mb-4">What did you think?</h3>
-        <div id="reactions" class="flex gap-4">
-          <button
-            data-reaction="like"
-            class="reaction-btn flex items-center gap-2 px-4 py-2 rounded-lg border border-[rgb(var(--color-border))] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-          >
-            <span class="text-2xl">👍</span>
-            <span class="reaction-count">0</span>
-          </button>
-          <button
-            data-reaction="heart"
-            class="reaction-btn flex items-center gap-2 px-4 py-2 rounded-lg border border-[rgb(var(--color-border))] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-          >
-            <span class="text-2xl">❤️</span>
-            <span class="reaction-count">0</span>
-          </button>
-          <button
-            data-reaction="celebrate"
-            class="reaction-btn flex items-center gap-2 px-4 py-2 rounded-lg border border-[rgb(var(--color-border))] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-          >
-            <span class="text-2xl">🎉</span>
-            <span class="reaction-count">0</span>
-          </button>
-        </div>
-      </div>
-
       <!-- Comments Section with giscus -->
       <div class="mt-12 pt-8 border-t border-[rgb(var(--color-border))]">
         <h3 class="text-2xl font-bold mb-6">Comments</h3>
@@ -172,76 +145,8 @@ const { Content } = await post.render();
           data-theme="preferred_color_scheme"
           data-lang="en"
           crossorigin="anonymous"
-          async
-        ></script>
+          async></script>
       </div>
     </article>
   </main>
-
-  <!-- Reactions Script -->
-  <script define:vars={{ postSlug: post.slug }}>
-    const WORKER_URL =
-      "https://blog-worker.yaayes-dev-stats-worker.workers.dev";
-
-    // Load reactions on page load
-    async function loadReactions() {
-      try {
-        const response = await fetch(`${WORKER_URL}/reactions/${postSlug}`);
-        if (response.ok) {
-          const data = await response.json();
-          updateReactionCounts(data.reactions || {});
-        }
-      } catch (error) {
-        console.error("Failed to load reactions:", error);
-      }
-    }
-
-    // Update reaction counts in UI
-    function updateReactionCounts(reactions) {
-      Object.entries(reactions).forEach(([type, count]) => {
-        const button = document.querySelector(`[data-reaction="${type}"]`);
-        if (button) {
-          const countEl = button.querySelector(".reaction-count");
-          if (countEl) countEl.textContent = count;
-        }
-      });
-    }
-
-    // Handle reaction button clicks
-    document.querySelectorAll(".reaction-btn").forEach((button) => {
-      button.addEventListener("click", async () => {
-        const reactionType = button.dataset.reaction;
-
-        // Check if user already reacted (stored in localStorage)
-        const storageKey = `reaction_${postSlug}_${reactionType}`;
-        if (localStorage.getItem(storageKey)) {
-          alert("You already reacted with this!");
-          return;
-        }
-
-        try {
-          const response = await fetch(`${WORKER_URL}/reactions/${postSlug}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ reaction: reactionType }),
-          });
-
-          if (response.ok) {
-            const data = await response.json();
-            updateReactionCounts(data.reactions);
-            localStorage.setItem(storageKey, "true");
-
-            // Visual feedback
-            button.classList.add("animate-pulse");
-            setTimeout(() => button.classList.remove("animate-pulse"), 500);
-          }
-        } catch (error) {
-          console.error("Failed to add reaction:", error);
-        }
-      });
-    });
-
-    // Load reactions when page loads
-    loadReactions();
-  </script>
 </Layout>
