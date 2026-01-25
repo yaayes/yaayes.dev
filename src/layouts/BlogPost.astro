@@ -158,7 +158,8 @@ const { Content } = await post.render();
       <!-- Comments Section with giscus -->
       <div class="mt-12 pt-8 border-t border-[rgb(var(--color-border))]">
         <h3 class="text-2xl font-bold mb-6">Comments</h3>
-        <div
+        <script
+          src="https://giscus.app/client.js"
           data-repo="yaayes/yaayes.dev"
           data-repo-id="R_kgDORAkdoA"
           data-category="Announcements"
@@ -170,11 +171,9 @@ const { Content } = await post.render();
           data-input-position="bottom"
           data-theme="preferred_color_scheme"
           data-lang="en"
-          data-loading="lazy"
           crossorigin="anonymous"
           async
-        >
-        </div>
+        ></script>
       </div>
     </article>
   </main>
@@ -182,7 +181,7 @@ const { Content } = await post.render();
   <!-- Reactions Script -->
   <script define:vars={{ postSlug: post.slug }}>
     const WORKER_URL =
-      "https://https://blog-worker.yaayes-dev-stats-worker.workers.dev";
+      "https://blog-worker.yaayes-dev-stats-worker.workers.dev";
 
     // Load reactions on page load
     async function loadReactions() {
@@ -245,7 +244,4 @@ const { Content } = await post.render();
     // Load reactions when page loads
     loadReactions();
   </script>
-
-  <!-- giscus Script -->
-  <script src="https://giscus.app/client.js" async></script>
 </Layout>
