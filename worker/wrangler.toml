@@ -13,9 +13,9 @@ kv_namespaces = [
 enabled = true
 invocation_logs = true
 
-# Cron trigger for updating popular posts (runs every Sunday at midnight)
+# Cron trigger for updating popular posts (runs daily at midnight UTC)
 [triggers]
-crons = ["* * * * *"]
+crons = ["0 0 * * *"]
 
 # Environment variables (set these via wrangler secret or dashboard)
 [vars]
