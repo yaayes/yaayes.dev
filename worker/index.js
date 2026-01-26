@@ -37,6 +37,28 @@ export default {
         return await getPopularPosts(env, corsHeaders);
       }
 
+      // Manual trigger for popular posts update (for testing)
+      if (url.pathname === "/trigger-update" && request.method === "POST") {
+        try {
+          const result = await updatePopularPosts(env);
+          return new Response(
+            JSON.stringify({ success: true, posts: result }),
+            {
+              status: 200,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            },
+          );
+        } catch (error) {
+          return new Response(
+            JSON.stringify({ error: error.message, stack: error.stack }),
+            {
+              status: 500,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            },
+          );
+        }
+      }
+
       return new Response("Not Found", { status: 404, headers: corsHeaders });
     } catch (error) {
       return new Response(JSON.stringify({ error: error.message }), {
@@ -167,6 +189,10 @@ async function getPopularPosts(env, corsHeaders) {
 
 // Update popular posts from Cloudflare Analytics API
 async function updatePopularPosts(env) {
+  console.log("Starting popular posts update...");
+  console.log("Zone ID:", env.CLOUDFLARE_ZONE_ID);
+  console.log("Date range:", getWeekAgo(), "to", getNow());
+  
   const query = `
     query {
       viewer {
@@ -176,7 +202,7 @@ async function updatePopularPosts(env) {
               datetime_geq: "${getWeekAgo()}"
               datetime_lt: "${getNow()}"
             }
-            limit: 10
+            limit: 100
             orderBy: [sum_requests_DESC]
           ) {
             dimensions {
@@ -201,22 +227,54 @@ async function updatePopularPosts(env) {
   });
 
   if (!response.ok) {
-    throw new Error("Failed to fetch analytics data");
+    const errorText = await response.text();
+    console.error("Analytics API error:", response.status, errorText);
+    throw new Error(`Failed to fetch analytics data: ${response.status}`);
   }
 
   const result = await response.json();
+  console.log("Analytics API result:", JSON.stringify(result, null, 2));
+
+  if (result.errors) {
+    console.error("GraphQL errors:", result.errors);
+    throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+  }
+  
   const httpGroups =
     result.data?.viewer?.zones?.[0]?.httpRequestsAdaptiveGroups || [];
+  
+  console.log(`Total requests found: ${httpGroups.length}`);
+
+  // Log all paths to see what we're getting
+  httpGroups.forEach((group, idx) => {
+    if (idx < 20) {
+      // Log first 20
+      console.log(
+        `Path ${idx + 1}: ${group.dimensions.clientRequestPath} (${group.sum.requests} requests)`,
+      );
+    }
+  });
 
   // Filter only blog posts and format
   const popularPosts = httpGroups
-    .filter((group) => group.dimensions.clientRequestPath.startsWith("/blog/"))
+    .filter((group) => {
+      const path = group.dimensions.clientRequestPath;
+      const isBlogPost =
+        path.startsWith("/blog/") &&
+        path !== "/blog/" &&
+        !path.includes("/tag/");
+      if (isBlogPost) {
+        console.log(`Matched blog post: ${path}`);
+      }
+      return isBlogPost;
+    })
     .map((group) => ({
       path: group.dimensions.clientRequestPath,
       views: group.sum.requests,
       title:
         group.dimensions.clientRequestPath
           .split("/blog/")[1]
+          ?.replace(/\//g, "")
           ?.replace(/-/g, " ") || "Unknown",
     }))
     .slice(0, 5);
@@ -225,6 +283,9 @@ async function updatePopularPosts(env) {
   await env.KV.put("popular-posts", JSON.stringify(popularPosts));
 
   console.log(`Updated popular posts: ${popularPosts.length} posts`);
+  console.log("Popular posts:", JSON.stringify(popularPosts, null, 2));
+
+  return popularPosts;
 }
 
 function getWeekAgo() {

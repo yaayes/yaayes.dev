@@ -15,7 +15,7 @@ invocation_logs = true
 
 # Cron trigger for updating popular posts (runs every Sunday at midnight)
 [triggers]
-crons = ["0 0 * * mon"]
+crons = ["* * * * *"]
 
 # Environment variables (set these via wrangler secret or dashboard)
 [vars]
