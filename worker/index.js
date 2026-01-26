@@ -288,7 +288,7 @@ async function updatePopularPosts(env) {
 
 function getWeekAgo() {
   const date = new Date();
-  date.setDate(date.getDate() - 7);
+  date.setDate(date.getDate() - 1); // Changed from 7 to 1 day (24 hours max)
   return date.toISOString();
 }
 
