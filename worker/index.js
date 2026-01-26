@@ -203,14 +203,12 @@ async function updatePopularPosts(env) {
               datetime_lt: "${getNow()}"
             }
             limit: 100
-            orderBy: [sum_requests_DESC]
+            orderBy: [count_DESC]
           ) {
             dimensions {
               clientRequestPath
             }
-            sum {
-              requests
-            }
+            count
           }
         }
       }
@@ -250,7 +248,7 @@ async function updatePopularPosts(env) {
     if (idx < 20) {
       // Log first 20
       console.log(
-        `Path ${idx + 1}: ${group.dimensions.clientRequestPath} (${group.sum.requests} requests)`,
+        `Path ${idx + 1}: ${group.dimensions.clientRequestPath} (${group.count} requests)`,
       );
     }
   });
@@ -270,7 +268,7 @@ async function updatePopularPosts(env) {
     })
     .map((group) => ({
       path: group.dimensions.clientRequestPath,
-      views: group.sum.requests,
+      views: group.count,
       title:
         group.dimensions.clientRequestPath
           .split("/blog/")[1]
