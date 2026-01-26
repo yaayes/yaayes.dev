@@ -254,8 +254,8 @@ async function updatePopularPosts(env) {
     }
   });
 
-  // Filter only blog posts and format
-  const popularPosts = httpGroups
+  // Filter only blog posts and normalize paths
+  const blogPosts = httpGroups
     .filter((group) => {
       const path = group.dimensions.clientRequestPath;
       const isBlogPost =
@@ -267,15 +267,34 @@ async function updatePopularPosts(env) {
       }
       return isBlogPost;
     })
-    .map((group) => ({
-      path: group.dimensions.clientRequestPath,
-      views: group.count,
-      title:
-        group.dimensions.clientRequestPath
-          .split("/blog/")[1]
-          ?.replace(/\//g, "")
-          ?.replace(/-/g, " ") || "Unknown",
-    }))
+    .map((group) => {
+      // Normalize path by removing trailing slash
+      const normalizedPath = group.dimensions.clientRequestPath.replace(/\/$/, "");
+      return {
+        path: normalizedPath,
+        views: group.count,
+        slug: normalizedPath.split("/blog/")[1] || "unknown",
+      };
+    });
+
+  // Deduplicate and sum views for same posts
+  const postsMap = new Map();
+  blogPosts.forEach((post) => {
+    if (postsMap.has(post.path)) {
+      // Add views to existing entry
+      postsMap.get(post.path).views += post.views;
+    } else {
+      postsMap.set(post.path, {
+        path: post.path,
+        views: post.views,
+        title: post.slug.replace(/-/g, " "),
+      });
+    }
+  });
+
+  // Convert to array, sort by views, and take top 5
+  const popularPosts = Array.from(postsMap.values())
+    .sort((a, b) => b.views - a.views)
     .slice(0, 5);
 
   // Store in KV
