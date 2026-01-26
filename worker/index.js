@@ -8,6 +8,7 @@ export default {
     // Only allow requests from your domain
     const allowedOrigins = [
       "https://yaayes.dev",
+      "https://blog-worker.yaayes.dev",
       "http://localhost:4321", // For local development
       "http://127.0.0.1:4321",
     ];
