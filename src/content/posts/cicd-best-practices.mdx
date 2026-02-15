@@ -2,7 +2,7 @@
 title: "CI/CD Pipeline Best Practices"
 description: "Learn how to build robust and efficient CI/CD pipelines that don't make you want to cry"
 pubDate: 2026-01-20
-author: "Yassine"
+author: "Yassine Sedrani"
 tags: ["cicd", "devops", "automation", "best-practices"]
 ---
 
@@ -160,6 +160,30 @@ Your pipeline should tell you:
 2. **Too many manual approvals**: Automate what you can
 3. **Ignoring failed builds**: Treat them like production outages
 4. **No rollback strategy**: Always have a plan B
+
+---
+
+## 🚀 Level Up Your Dev Workflow
+
+Speaking of automation and DevOps workflows... ever been stuck away from your dev machine when you need to fix something urgently? Or wanted to code from your iPad but your project requires a complex Docker environment?
+
+Here's the problem: **Your beautiful CI/CD pipeline is worthless if you can't access your development environment when inspiration strikes at 2 AM... from your tablet.**
+
+VS Code's Remote Tunnels sound great in theory, but they completely fall apart with Dev Containers. Port forwarding? Only works from localhost. SSH tunneling? Yeah, good luck setting that up from a coffee shop.
+
+I recently cracked this problem: **running VS Code CLI and DevTunnel INSIDE your Docker containers** with persistent authentication that survives rebuilds. The result? Your entire dev environment accessible from literally any device with a browser - iPad, phone, your friend's laptop, even that ancient Chromebook collecting dust.
+
+The full guide covers:
+- 🔐 Persistent authentication (no more re-authenticating after every rebuild)
+- 🌐 Public URLs for your web services without port-forwarding gymnastics
+- ⚡ Supervisor-managed tunnels that just work™
+- 😱 The authentication nightmare I went through so you don't have to
+
+**[→ Read the complete setup guide: Remote Development from Anywhere](/blog/remote-development-vscode-devtunnel)**
+
+Because the best DevOps setup is one you can access from a beach in Bali. Or your couch. We don't judge. ☕
+
+---
 
 ## Conclusion
 

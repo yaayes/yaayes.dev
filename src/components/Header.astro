@@ -3,95 +3,276 @@
 const currentPath = Astro.url.pathname;
 ---
 
-<header class="border-b border-[rgb(var(--color-border))] sticky top-0 bg-[rgb(var(--color-bg))]/80 backdrop-blur-sm z-50">
-  <nav class="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
-    <a href="/" class="text-xl font-bold hover:text-[rgb(var(--color-primary))] transition-colors whitespace-nowrap">
-      ~/blog
+<header
+  class="border-b border-[rgb(var(--color-border))] sticky top-0 bg-[rgb(var(--color-bg))]/80 backdrop-blur-sm z-50"
+>
+  <nav
+    class="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between gap-4"
+  >
+    <a
+      href="/"
+      class="text-lg font-bold hover:opacity-80 transition-opacity whitespace-nowrap font-mono flex items-center gap-1"
+    >
+      <span class="text-[rgb(var(--color-primary))]">➜</span>
+      <span class="text-[rgb(var(--color-primary))]">~</span>
+      <span>/yaayes.dev</span>
+      <span
+        class="inline-block w-2 h-4 bg-[rgb(var(--color-text))] ml-1 animate-blink"
+      ></span>
     </a>
-    
+
     <!-- Search Bar -->
     <div class="flex-1 max-w-md hidden md:block">
       <div class="relative">
-        <input 
-          type="text" 
+        <input
+          type="text"
           id="header-search"
           placeholder="Search posts..."
           class="w-full px-4 py-2 pl-10 pr-10 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-primary))] text-sm"
         />
-        <svg class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        <svg
+          class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
         </svg>
-        <button 
+        <button
           id="clear-search"
           class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[rgb(var(--color-primary))] transition-colors"
           aria-label="Clear search"
         >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          <svg
+            class="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M6 18L18 6M6 6l12 12"></path>
           </svg>
         </button>
       </div>
     </div>
-    
+
     <div class="flex items-center gap-6">
-      <a 
-        href="/" 
+      <a
+        href="/"
         class:list={[
           "font-semibold hover:text-[rgb(var(--color-primary))] transition-colors",
-          currentPath === "/" && "text-[rgb(var(--color-primary))]"
+          currentPath === "/" && "text-[rgb(var(--color-primary))]",
         ]}
       >
         Home
       </a>
-      <a 
-        href="/blog" 
+      <a
+        href="/blog"
         class:list={[
           "font-semibold hover:text-[rgb(var(--color-primary))] transition-colors",
-          currentPath.startsWith("/blog") && "text-[rgb(var(--color-primary))]"
+          currentPath.startsWith("/blog") && "text-[rgb(var(--color-primary))]",
         ]}
       >
         Blog
       </a>
-      <a 
-        href="/contact" 
+      <a
+        href="/contact"
         class:list={[
           "font-semibold hover:text-[rgb(var(--color-primary))] transition-colors",
-          currentPath === "/contact" && "text-[rgb(var(--color-primary))]"
+          currentPath === "/contact" && "text-[rgb(var(--color-primary))]",
         ]}
       >
         Contact
       </a>
-      
-      <!-- Theme toggle button -->
-      <button 
-        onclick="window.toggleTheme()"
-        class="p-2 rounded-lg hover:bg-[rgb(var(--color-border))] transition-colors text-[rgb(var(--color-text))]"
-        aria-label="Toggle theme"
-      >
-        <svg class="w-5 h-5 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-        </svg>
-        <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-        </svg>
-      </button>
+
+      <!-- Theme toggle dropdown -->
+      <div class="relative">
+        <button
+          id="theme-toggle"
+          class="p-2 rounded-lg hover:bg-[rgb(var(--color-border))] transition-colors text-[rgb(var(--color-text))]"
+          aria-label="Theme options"
+        >
+          <!-- Sun icon (light) -->
+          <svg
+            id="icon-light"
+            class="w-5 h-5 hidden"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+            ></path>
+          </svg>
+          <!-- Moon icon (dark) -->
+          <svg
+            id="icon-dark"
+            class="w-5 h-5 hidden"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+            ></path>
+          </svg>
+          <!-- Monitor icon (system) -->
+          <svg
+            id="icon-system"
+            class="w-5 h-5 hidden"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+            ></path>
+          </svg>
+        </button>
+
+        <!-- Dropdown menu -->
+        <div
+          id="theme-menu"
+          class="hidden absolute right-0 mt-2 w-32 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg))] shadow-lg overflow-hidden z-50"
+        >
+          <button
+            onclick="window.setTheme('light')"
+            class="w-full px-4 py-2 text-left hover:bg-[rgb(var(--color-border))] transition-colors flex items-center gap-2"
+          >
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+              ></path>
+            </svg>
+            Light
+          </button>
+          <button
+            onclick="window.setTheme('dark')"
+            class="w-full px-4 py-2 text-left hover:bg-[rgb(var(--color-border))] transition-colors flex items-center gap-2"
+          >
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+              ></path>
+            </svg>
+            Dark
+          </button>
+          <button
+            onclick="window.setTheme('system')"
+            class="w-full px-4 py-2 text-left hover:bg-[rgb(var(--color-border))] transition-colors flex items-center gap-2"
+          >
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+              ></path>
+            </svg>
+            System
+          </button>
+        </div>
+      </div>
     </div>
   </nav>
 </header>
 
 <script>
-  // Handle header search - redirect to blog page
-  document.addEventListener('DOMContentLoaded', () => {
-    const headerSearch = document.getElementById('header-search');
-    const clearBtn = document.getElementById('clear-search');
-    
+  // Theme dropdown functionality
+  document.addEventListener("DOMContentLoaded", () => {
+    const themeToggle = document.getElementById("theme-toggle");
+    const themeMenu = document.getElementById("theme-menu");
+    const iconLight = document.getElementById("icon-light");
+    const iconDark = document.getElementById("icon-dark");
+    const iconSystem = document.getElementById("icon-system");
+
+    // Update icon based on current theme
+    function updateThemeIcon() {
+      const theme = localStorage.getItem("theme") || "system";
+      iconLight?.classList.add("hidden");
+      iconDark?.classList.add("hidden");
+      iconSystem?.classList.add("hidden");
+
+      if (theme === "light") {
+        iconLight?.classList.remove("hidden");
+      } else if (theme === "dark") {
+        iconDark?.classList.remove("hidden");
+      } else {
+        iconSystem?.classList.remove("hidden");
+      }
+    }
+
+    // Toggle dropdown menu
+    themeToggle?.addEventListener("click", () => {
+      themeMenu?.classList.toggle("hidden");
+    });
+
+    // Close menu when clicking outside
+    document.addEventListener("click", (e) => {
+      if (
+        !themeToggle?.contains(e.target as Node) &&
+        !themeMenu?.contains(e.target as Node)
+      ) {
+        themeMenu?.classList.add("hidden");
+      }
+    });
+
+    // Update icon when theme changes
+    window.addEventListener("themechange", () => {
+      updateThemeIcon();
+      themeMenu?.classList.add("hidden");
+    });
+
+    // Initialize icon
+    updateThemeIcon();
+
+    const headerSearch = document.getElementById("header-search");
+    const clearBtn = document.getElementById("clear-search");
+
     // Populate search from URL query
-    const searchQuery = new URLSearchParams(window.location.search).get('q');
+    const searchQuery = new URLSearchParams(window.location.search).get("q");
     if (searchQuery && headerSearch) {
       headerSearch.value = searchQuery;
-      if (clearBtn) clearBtn.classList.remove('hidden');
+      if (clearBtn) clearBtn.classList.remove("hidden");
     }
-    
+
     if (headerSearch) {
       const handleSearch = () => {
         const searchValue = headerSearch.value;
@@ -100,44 +281,64 @@ const currentPath = Astro.url.pathname;
           window.location.href = `/search?q=${encodeURIComponent(searchValue)}`;
         }
       };
-      
+
       // Show/hide clear button
-      headerSearch.addEventListener('input', (e) => {
+      headerSearch.addEventListener("input", (e) => {
         if (clearBtn) {
           if (e.target.value) {
-            clearBtn.classList.remove('hidden');
+            clearBtn.classList.remove("hidden");
           } else {
-            clearBtn.classList.add('hidden');
+            clearBtn.classList.add("hidden");
           }
         }
-        
+
         // Sync with Pagefind on blog page
-        const mainSearch = document.querySelector('.pagefind-ui__search-input');
+        const mainSearch = document.querySelector(".pagefind-ui__search-input");
         if (mainSearch) {
           mainSearch.value = e.target.value;
-          mainSearch.dispatchEvent(new Event('input', { bubbles: true }));
+          mainSearch.dispatchEvent(new Event("input", { bubbles: true }));
         }
       });
-      
-      headerSearch.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
+
+      headerSearch.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") {
           handleSearch();
         }
       });
     }
-    
+
     // Clear button functionality
     if (clearBtn) {
-      clearBtn.addEventListener('click', () => {
+      clearBtn.addEventListener("click", () => {
         if (headerSearch) {
-          headerSearch.value = '';
-          clearBtn.classList.add('hidden');
+          headerSearch.value = "";
+          clearBtn.classList.add("hidden");
           // If on search page with query, redirect to clear results
-          if (window.location.pathname === '/search' && window.location.search.includes('q=')) {
-            window.location.href = '/search';
+          if (
+            window.location.pathname === "/search" &&
+            window.location.search.includes("q=")
+          ) {
+            window.location.href = "/search";
           }
         }
       });
     }
   });
 </script>
+
+<style>
+  @keyframes blink {
+    0%,
+    50% {
+      opacity: 1;
+    }
+    51%,
+    100% {
+      opacity: 0;
+    }
+  }
+
+  .animate-blink {
+    animation: blink 1s step-end infinite;
+  }
+</style>

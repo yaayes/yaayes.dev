@@ -8,7 +8,11 @@ export default defineConfig({
   site: "https://yourdomain.com",
   markdown: {
     shikiConfig: {
-      theme: "github-dark",
+      themes: {
+        light: "github-light",
+        dark: "github-dark",
+      },
+      defaultColor: false,
       wrap: true,
     },
   },

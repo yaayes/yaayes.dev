@@ -1,0 +1,367 @@
+---
+title: "Remote Development from Anywhere: VS Code Tunnel & DevTunnel Setup"
+description: "Ever wanted to code from your iPad on a beach? Learn how to set up persistent VS Code tunnels in Docker containers for true remote development freedom"
+pubDate: 2026-02-15
+author: "Yassine Sedrani"
+tags: ["vscode", "docker", "remote-development", "devops", "tutorial"]
+---
+
+# Remote Development from Anywhere: VS Code Tunnel & DevTunnel Setup
+
+Ever found yourself on a train, tablet in hand, suddenly remembering you forgot to push that critical fix? Or maybe you're on vacation (you rebel) and need to quickly check something in your dev environment? Well, buckle up, because we're about to turn your browser into a full-fledged development environment.
+
+## The Starting Point: VS Code Tunnel (The Easy Part)
+
+VS Code has this neat feature called "Remote Tunnels" that lets you access your code from anywhere. The basic setup is laughably simple:
+
+1. Open VS Code on your host machine
+2. Hit `Cmd/Ctrl + Shift + P` and search for "Remote-Tunnels: Turn on Remote Tunnel Access"
+3. Follow the GitHub authentication flow
+4. Boom! You get a URL like `https://vscode.dev/tunnel/your-machine-name`
+
+Open that URL on any device with a browser, and there's your code. Pretty cool, right?
+
+## The Plot Twist: Dev Containers Don't Play Nice
+
+Here's where things get interesting (read: frustrating). You excitedly open your project, hit "Reopen in Container" and... nothing. VS Code Web doesn't support the Dev Container extension properly. You're stuck looking at your code but can't actually run it in your carefully crafted containerized environment.
+
+Thanks for nothing, reality.
+
+## The Solution: Move VS Code CLI Inside the Container
+
+Instead of running the tunnel from your host machine, what if we run it _inside_ the container? Mind. Blown.
+
+Here's the game plan:
+
+### 1. Complete Dockerfile Example
+
+Here's what your Dockerfile should look like with all the necessary tools installed:
+
+```dockerfile
+FROM ubuntu:22.04
+
+# Install basic dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    ca-certificates \
+    supervisor \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create a non-root user
+ARG USERNAME=devuser
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
+RUN groupadd --gid $USER_GID $USERNAME \
+    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME
+
+# Install VS Code CLI
+RUN curl -fsSL "https://code.visualstudio.com/sha/download?build=stable&os=cli-alpine-x64" -o vscode_cli.tar.gz \
+    && tar -xf vscode_cli.tar.gz -C /usr/local/bin \
+    && rm vscode_cli.tar.gz
+
+# Install DevTunnel
+RUN arch="$(dpkg --print-architecture)" \
+    && curl -fsSL "https://aka.ms/devtunnels/linux-${arch}" -o devtunnel \
+    && mv devtunnel /usr/local/bin/devtunnel \
+    && chmod +x /usr/local/bin/devtunnel
+
+# Copy start scripts
+COPY start-vscode-tunnel /usr/local/bin/start-vscode-tunnel
+COPY start-devtunnel /usr/local/bin/start-devtunnel
+RUN chmod +x /usr/local/bin/start-vscode-tunnel /usr/local/bin/start-devtunnel
+
+# Copy supervisor configuration
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Copy entrypoint script
+COPY start-container /usr/local/bin/start-container
+RUN chmod +x /usr/local/bin/start-container
+
+# Your application setup goes here
+# COPY . /workspace
+# RUN your build commands...
+
+WORKDIR /workspace
+
+# Use entrypoint to start supervisor in background, then run any command
+ENTRYPOINT ["/usr/local/bin/start-container"]
+```
+
+The key piece here is the `start-container` entrypoint script:
+
+```bash
+#!/usr/bin/env bash
+
+# Start supervisor in the background to manage tunnels
+/usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
+
+# If no command was provided, keep container alive for development
+# Otherwise, execute the provided command
+if [ $# -eq 0 ]; then
+    exec sleep infinity
+else
+    exec "$@"
+fi
+```
+
+This pattern lets supervisor manage your tunnels in the background while:
+
+- Keeping the container alive by default for pure development scenarios
+- Allowing you to override with your application command in docker-compose (e.g., `command: npm start` or `command: python app.py`)
+
+### 2. Install VS Code CLI in Your Container
+
+The Dockerfile above already includes the VS Code CLI installation, but here's the standalone snippet if you need it:
+
+```dockerfile
+# Install VS Code CLI
+RUN curl -fsSL "https://code.visualstudio.com/sha/download?build=stable&os=cli-alpine-x64" -o vscode_cli.tar.gz \
+    && tar -xf vscode_cli.tar.gz -C /usr/local/bin \
+    && rm vscode_cli.tar.gz
+```
+
+### 3. Create a Start Script
+
+Create a script (let's call it `start-vscode-tunnel`):
+
+```bash
+#!/usr/bin/env bash
+exec /usr/local/bin/code tunnel \
+    --accept-server-license-terms \
+    --no-sleep \
+    --name your-container-name
+```
+
+Make it executable and put it somewhere like `/usr/local/bin/`.
+
+### 4. Add Supervisor Configuration
+
+Use supervisor to keep the tunnel running. Create `supervisord.conf`:
+
+```ini
+[program:vscode-tunnel]
+command=/usr/local/bin/start-vscode-tunnel
+user=youruser
+environment=HOME="/home/youruser"
+stdout_logfile=/dev/stdout
+stdout_logfile_maxbytes=0
+stderr_logfile=/dev/stderr
+stderr_logfile_maxbytes=0
+autorestart=true
+startretries=3
+autostart=true
+```
+
+Rebuild your container, and... wait, why isn't it working?
+
+## The Authentication Nightmare
+
+You rebuild the container. The tunnel starts asking you to authenticate. You authenticate. It works! You're a genius!
+
+Then you rebuild the container again (because let's face it, we always do). And it asks you to authenticate again. And again. And AGAIN.
+
+Looking at the logs, you see something like:
+
+```
+[error] failed to get authorization token: not authenticated
+```
+
+Your supervisor is having an existential crisis, restarting the tunnel over and over, each time begging for authentication that never comes.
+
+## The Real Solution: Persistent Authentication with Volumes
+
+The problem? Every time you rebuild the container, the authentication token disappears into the void. The solution? Docker volumes, baby!
+
+### Step 1: Add Volumes to docker-compose.yml
+
+```yaml
+services:
+  your-service:
+    volumes:
+      - ".:/workspace"
+      - "vscode-server:/home/youruser/.vscode-server"
+      - "vscode-cli:/home/youruser/.vscode/cli"
+
+volumes:
+  vscode-server:
+    driver: local
+  vscode-cli:
+    driver: local
+```
+
+### Step 2: Update Your Start Script
+
+Here's the magic sauce - tell VS Code CLI exactly where to store its tokens:
+
+```bash
+#!/usr/bin/env bash
+
+CLI_DATA_DIR="/home/youruser/.vscode/cli"
+
+# Check if already authenticated
+if [ ! -f "$CLI_DATA_DIR/token.json" ]; then
+    echo "Not authenticated. Please run:"
+    echo "docker compose exec your-service /usr/local/bin/code tunnel user login --provider github --cli-data-dir=/home/youruser/.vscode/cli"
+    exit 1
+fi
+
+# Start tunnel with persisted authentication
+exec /usr/local/bin/code tunnel \
+    --accept-server-license-terms \
+    --no-sleep \
+    --name your-container-name \
+    --cli-data-dir="$CLI_DATA_DIR"
+```
+
+### Step 3: Authenticate Once
+
+```bash
+docker compose exec your-service /usr/local/bin/code tunnel user login \
+    --provider github \
+    --cli-data-dir=/home/youruser/.vscode/cli
+```
+
+Follow the authentication flow, and your tokens are now safely stored in the Docker volume. Rebuild your container 100 times - it won't care. The authentication persists like your coffee addiction.
+
+## Bonus Round: DevTunnel for Your Web Services
+
+Now you can code from anywhere, but what about accessing your actual application? Your web server is running on port 3000 (or 8000, or 80, or whatever), but you can't exactly port-forward through VS Code's tunnel.
+
+Enter DevTunnel - Microsoft's other tunneling tool that's perfect for this.
+
+### Install DevTunnel in Your Container
+
+```dockerfile
+# Install DevTunnel
+RUN arch="$(dpkg --print-architecture)" \
+    && curl -fsSL "https://aka.ms/devtunnels/linux-${arch}" -o devtunnel \
+    && mv devtunnel /usr/local/bin/devtunnel \
+    && chmod +x /usr/local/bin/devtunnel
+```
+
+### Create a Start Script
+
+Similar approach as before:
+
+```bash
+#!/usr/bin/env bash
+
+DEVTUNNEL_DIR="/home/youruser/.local/share/DevTunnels"
+
+# Check if authenticated
+if [ ! -f "$DEVTUNNEL_DIR/devtunnels-tokens-github" ]; then
+    echo "Not authenticated."
+    exec devtunnel user login -g -d
+else
+    # Start tunnel - expose your web server port
+    exec /usr/local/bin/devtunnel host -p 80
+fi
+```
+
+### Add to Supervisor
+
+```ini
+[program:devtunnel]
+command=/usr/local/bin/start-devtunnel
+user=youruser
+environment=HOME="/home/youruser"
+stdout_logfile=/dev/stdout
+stdout_logfile_maxbytes=0
+stderr_logfile=/dev/stderr
+stderr_logfile_maxbytes=0
+autorestart=true
+startretries=3
+autostart=true
+```
+
+### Add Volume for Persistence
+
+```yaml
+services:
+  your-service:
+    volumes:
+      - ".:/workspace"
+      - "vscode-server:/home/youruser/.vscode-server"
+      - "vscode-cli:/home/youruser/.vscode/cli"
+      - "devtunnel:/home/youruser/.local/share/DevTunnels"
+
+volumes:
+  vscode-server:
+    driver: local
+  vscode-cli:
+    driver: local
+  devtunnel:
+    driver: local
+```
+
+### Authenticate DevTunnel
+
+```bash
+docker compose exec your-service devtunnel user login --github
+```
+
+Once authenticated, devtunnel will give you a public URL whenever it starts. Check your logs:
+
+```bash
+docker compose logs your-service | grep -i "ready to accept"
+```
+
+You'll see something like:
+
+```
+Ready to accept connections at: https://something-unique.devtunnels.ms
+```
+
+Boom! Your web server is now accessible from anywhere.
+
+## The Complete Workflow
+
+1. Start your container - supervisor automatically starts both tunnels
+2. Open `vscode.dev/tunnel/your-container-name` in your browser
+3. Check logs for your devtunnel URL
+4. Code and test from literally anywhere with an internet connection
+
+## Pro Tips
+
+- **Security**: Both tunnels use GitHub authentication by default. Only you can access them.
+- **Naming**: Choose descriptive tunnel names if you have multiple projects.
+- **Logs**: Keep an eye on supervisor logs when troubleshooting: `docker compose logs -f`
+- **Ports**: DevTunnel can expose multiple ports if needed: `-p 80 -p 3000 -p 5173`
+- **Cleanup**: Both tunnels will show up in your GitHub account settings if you need to revoke access
+
+## Conclusion
+
+What started as "I just want to code from my iPad" turned into a deep dive of container tunneling, supervisor configurations, and Docker volumes. But now? You've got a legitimate remote development setup that works from any device with a browser.
+
+Your move, coffee shop WiFi.
+
+## Quick Reference
+
+### Authenticate VS Code Tunnel
+
+```bash
+docker compose exec your-service /usr/local/bin/code tunnel user login \
+    --provider github \
+    --cli-data-dir=/home/youruser/.vscode/cli
+```
+
+### Authenticate DevTunnel
+
+```bash
+docker compose exec your-service devtunnel user login --github
+```
+
+### Check Tunnel Status
+
+```bash
+docker compose logs your-service | grep -E "tunnel|devtunnel"
+```
+
+### Restart Tunnels
+
+```bash
+docker compose exec your-service supervisorctl restart vscode-tunnel
+docker compose exec your-service supervisorctl restart devtunnel
+```
+
+Now go forth and code from that beach in Bali. Or, you know, your couch. We don't judge.

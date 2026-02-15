@@ -1,15 +1,18 @@
 ---
-import '../styles/global.css';
+import "../styles/global.css";
 
 interface Props {
   title: string;
   description?: string;
 }
 
-const { title, description = 'A technical blog about software development and DevOps' } = Astro.props;
+const {
+  title,
+  description = "A technical blog about software development and DevOps",
+} = Astro.props;
 ---
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -17,18 +20,26 @@ const { title, description = 'A technical blog about software development and De
     <meta name="description" content={description} />
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
-    
+
     <!-- Dark mode script - runs before body to prevent flash -->
     <script is:inline>
       function initTheme() {
-        const stored = localStorage.getItem('theme');
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        const theme = stored || (prefersDark ? 'dark' : 'light');
-        
-        if (theme === 'dark') {
-          document.documentElement.classList.add('dark');
+        const stored = localStorage.getItem("theme") || "system";
+        const prefersDark = window.matchMedia(
+          "(prefers-color-scheme: dark)",
+        ).matches;
+
+        let shouldBeDark = false;
+        if (stored === "system") {
+          shouldBeDark = prefersDark;
         } else {
-          document.documentElement.classList.remove('dark');
+          shouldBeDark = stored === "dark";
+        }
+
+        if (shouldBeDark) {
+          document.documentElement.classList.add("dark");
+        } else {
+          document.documentElement.classList.remove("dark");
         }
       }
       initTheme();
@@ -36,27 +47,53 @@ const { title, description = 'A technical blog about software development and De
   </head>
   <body>
     <slot />
-    
+
     <!-- Theme toggle functionality -->
     <script>
-      function toggleTheme() {
-        const isDark = document.documentElement.classList.toggle('dark');
-        localStorage.setItem('theme', isDark ? 'dark' : 'light');
-      }
-      
-      // Expose toggle function globally
-      (window as any).toggleTheme = toggleTheme;
-      
-      // Listen for system theme changes
-      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-        if (!localStorage.getItem('theme')) {
-          if (e.matches) {
-            document.documentElement.classList.add('dark');
-          } else {
-            document.documentElement.classList.remove('dark');
-          }
+      function applyTheme(theme: string) {
+        const prefersDark = window.matchMedia(
+          "(prefers-color-scheme: dark)",
+        ).matches;
+        let shouldBeDark = false;
+
+        if (theme === "system") {
+          shouldBeDark = prefersDark;
+        } else {
+          shouldBeDark = theme === "dark";
         }
-      });
+
+        if (shouldBeDark) {
+          document.documentElement.classList.add("dark");
+        } else {
+          document.documentElement.classList.remove("dark");
+        }
+
+        localStorage.setItem("theme", theme);
+
+        // Dispatch event for UI updates
+        window.dispatchEvent(new CustomEvent("themechange", { detail: theme }));
+      }
+
+      function setTheme(theme: string) {
+        applyTheme(theme);
+      }
+
+      // Expose function globally
+      (window as any).setTheme = setTheme;
+
+      // Listen for system theme changes
+      window
+        .matchMedia("(prefers-color-scheme: dark)")
+        .addEventListener("change", (e) => {
+          const stored = localStorage.getItem("theme") || "system";
+          if (stored === "system") {
+            if (e.matches) {
+              document.documentElement.classList.add("dark");
+            } else {
+              document.documentElement.classList.remove("dark");
+            }
+          }
+        });
     </script>
   </body>
 </html>

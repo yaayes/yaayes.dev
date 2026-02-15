@@ -142,11 +142,54 @@ const { Content } = await render(post);
           data-reactions-enabled="1"
           data-emit-metadata="0"
           data-input-position="bottom"
-          data-theme="preferred_color_scheme"
+          data-theme="light"
           data-lang="en"
           crossorigin="anonymous"
           async></script>
       </div>
+
+      <script>
+        // Update giscus theme when theme changes
+        function updateGiscusTheme() {
+          const theme = localStorage.getItem("theme") || "system";
+          const prefersDark = window.matchMedia(
+            "(prefers-color-scheme: dark)",
+          ).matches;
+
+          let giscusTheme = "light";
+          if (theme === "system") {
+            giscusTheme = prefersDark ? "dark" : "light";
+          } else {
+            giscusTheme = theme;
+          }
+
+          const iframe = document.querySelector("iframe.giscus-frame");
+          if (iframe) {
+            iframe.contentWindow?.postMessage(
+              { giscus: { setConfig: { theme: giscusTheme } } },
+              "https://giscus.app",
+            );
+          }
+        }
+
+        // Update giscus theme on theme change
+        window.addEventListener("themechange", updateGiscusTheme);
+
+        // Update giscus theme on system preference change
+        window
+          .matchMedia("(prefers-color-scheme: dark)")
+          .addEventListener("change", () => {
+            const theme = localStorage.getItem("theme") || "system";
+            if (theme === "system") {
+              updateGiscusTheme();
+            }
+          });
+
+        // Initial theme update after giscus loads
+        window.addEventListener("load", () => {
+          setTimeout(updateGiscusTheme, 1000);
+        });
+      </script>
     </article>
   </main>
 </Layout>
