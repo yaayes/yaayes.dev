@@ -1,6 +1,7 @@
 {
   "name": "Astro Blog",
   "image": "mcr.microsoft.com/devcontainers/typescript-node:24",
+  "initializeCommand": "test -f worker/.env || touch worker/.env",
   "features": {
     "ghcr.io/devcontainers/features/git:1": {},
     "ghcr.io/devcontainers/features/github-cli:1": {},
