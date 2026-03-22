@@ -25,41 +25,48 @@ const socialLinks = [
   <div data-pagefind-ignore>
     <Header />
 
-    <main class="max-w-5xl mx-auto px-4 py-12">
-      <!-- Hero Section with Funny Intro -->
-      <section class="mb-20">
-        <div class="flex flex-col md:flex-row items-center gap-12">
-          <div class="flex-1">
-            <h1 class="text-4xl md:text-5xl font-bold mb-6">Hey there! 👋</h1>
-            <p class="text-xl mb-6 leading-relaxed">
+    <main class="max-w-5xl mx-auto px-4 py-16">
+      <!-- Hero Section -->
+      <section class="mb-24">
+        <!-- Terminal prompt accent -->
+        <p
+          class="font-mono text-sm mb-6 animate-fade-in-up"
+          style="color: rgb(var(--color-primary)); opacity: 0.7;"
+        >
+          $ whoami
+        </p>
+
+        <div class="flex flex-col md:flex-row items-start gap-12">
+          <div class="flex-1 animate-fade-in-up" style="animation-delay: 0.06s">
+            <p class="text-xl mb-5 leading-relaxed">
               I'm <span class="text-[rgb(var(--color-primary))] font-semibold"
                 >Yassine Sedrani</span
               >, a DevOps engineer who spends way too much time arguing with
               YAML files and pretending to understand Kubernetes networking.
             </p>
             <p
-              class="text-lg text-[rgb(var(--color-text))] opacity-80 mb-8 leading-relaxed"
+              class="text-base mb-8 leading-relaxed max-w-xl"
+              style="color: rgb(var(--color-text)); opacity: 0.65;"
             >
               When I'm not debugging production at 3 AM (which is more often
-              than I'd like), I write about software development, DevOps
-              practices, and occasionally share war stories from the trenches of
-              infrastructure management.
+              than I'd like), I write about DevOps practices, infrastructure,
+              and occasionally share war stories from the infrastructure
+              trenches.
             </p>
 
             <!-- Social Links -->
-            <div class="flex gap-4">
+            <div class="flex flex-wrap gap-2">
               {
                 socialLinks.map((link) => (
                   <a
                     href={link.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    class="p-3 rounded-lg border border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-primary))]/10 transition-colors text-[rgb(var(--color-text))]"
-                    aria-label={link.name}
+                    class="flex items-center gap-2 px-4 py-2 rounded-lg border border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-primary))] hover:text-[rgb(var(--color-primary))] transition-colors text-sm font-medium"
                   >
                     {link.icon === "github" && (
                       <svg
-                        class="w-6 h-6"
+                        class="w-4 h-4"
                         fill="currentColor"
                         viewBox="0 0 24 24"
                       >
@@ -68,7 +75,7 @@ const socialLinks = [
                     )}
                     {link.icon === "twitter" && (
                       <svg
-                        class="w-6 h-6"
+                        class="w-4 h-4"
                         fill="currentColor"
                         viewBox="0 0 24 24"
                       >
@@ -77,52 +84,71 @@ const socialLinks = [
                     )}
                     {link.icon === "linkedin" && (
                       <svg
-                        class="w-6 h-6"
+                        class="w-4 h-4"
                         fill="currentColor"
                         viewBox="0 0 24 24"
                       >
                         <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
                       </svg>
                     )}
+                    <span>{link.name}</span>
                   </a>
                 ))
               }
             </div>
           </div>
 
-          <!-- Optional: Add a profile image or illustration -->
+          <!-- Profile image — editorial style -->
           <div
-            class="hidden md:block w-64 h-64 rounded-full border-2 border-amber-200 overflow-hidden"
+            class="hidden md:block w-52 shrink-0 animate-fade-in-up"
+            style="animation-delay: 0.12s"
           >
-            <img
-              src="/me-and-my-lil-bro.png"
-              alt="Me and my little brother"
-              class="w-full h-full object-cover"
-            />
+            <div class="relative">
+              <img
+                src="/me-and-my-lil-bro.png"
+                alt="Yassine Sedrani"
+                class="w-full aspect-square object-cover rounded-2xl border border-[rgb(var(--color-border))]"
+              />
+              <!-- Amber offset accent -->
+              <div
+                class="absolute -top-2 -left-2 w-full h-full rounded-2xl -z-10"
+                style="background: rgb(var(--color-primary)); opacity: 0.18;"
+              >
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       <!-- Recent Posts -->
       <section>
-        <h2 class="text-3xl font-bold mb-6 flex items-center gap-2">
-          <span>#</span>
+        <h2 class="text-2xl font-bold mb-0 flex items-center gap-2">
+          <span class="font-mono" style="color: rgb(var(--color-primary));"
+            >#</span
+          >
           Recent Articles
         </h2>
-        <div class="space-y-8">
+        <div class="mt-1">
           {
             recentPosts.length > 0 ? (
               recentPosts.map((post) => (
-                <article class="card group">
+                <article class="post-item group">
                   <a href={`/blog/${post.slug}`} class="block">
-                    <h3 class="text-xl font-semibold mb-2 group-hover:text-[rgb(var(--color-primary))] transition-colors">
+                    <h3 class="text-lg font-semibold mb-2 leading-snug group-hover:text-[rgb(var(--color-primary))] transition-colors">
                       {post.data.title}
                     </h3>
-                    <p class="text-[rgb(var(--color-text))] opacity-75 text-sm mb-4 leading-relaxed">
+                    <p
+                      class="text-sm mb-3 leading-relaxed"
+                      style="color: rgb(var(--color-text)); opacity: 0.62;"
+                    >
                       {post.data.description}
                     </p>
-                    <div class="flex items-center gap-4 text-sm text-[rgb(var(--color-text))] opacity-60">
-                      <time datetime={post.data.pubDate.toISOString()}>
+                    <div class="flex flex-wrap items-center gap-3">
+                      <time
+                        datetime={post.data.pubDate.toISOString()}
+                        class="font-mono text-xs"
+                        style="color: rgb(var(--color-text)); opacity: 0.42;"
+                      >
                         {post.data.pubDate.toLocaleDateString("en-US", {
                           year: "numeric",
                           month: "short",
@@ -130,11 +156,9 @@ const socialLinks = [
                         })}
                       </time>
                       {post.data.tags.length > 0 && (
-                        <div class="flex gap-2">
-                          {post.data.tags.slice(0, 2).map((tag) => (
-                            <span class="px-2 py-1 border border-[rgb(var(--color-border))] rounded text-xs">
-                              {tag}
-                            </span>
+                        <div class="flex gap-1.5 flex-wrap">
+                          {post.data.tags.slice(0, 3).map((tag) => (
+                            <span class="tag">{tag}</span>
                           ))}
                         </div>
                       )}
@@ -143,16 +167,19 @@ const socialLinks = [
                 </article>
               ))
             ) : (
-              <p class="text-slate-600 dark:text-slate-400">
-                No posts yet. Check back soon!
+              <p
+                class="py-8 font-mono text-sm"
+                style="color: rgb(var(--color-text)); opacity: 0.5;"
+              >
+                // No posts yet. Check back soon!
               </p>
             )
           }
         </div>
         {
           recentPosts.length > 0 && (
-            <a href="/blog" class="btn mt-6 inline-block">
-              View All Posts →
+            <a href="/blog" class="btn mt-8 inline-flex">
+              View all posts →
             </a>
           )
         }
@@ -162,9 +189,18 @@ const socialLinks = [
     <!-- Footer -->
     <footer class="border-t border-[rgb(var(--color-border))] mt-20">
       <div
-        class="max-w-5xl mx-auto px-4 py-8 text-center text-[rgb(var(--color-text))] opacity-70"
+        class="max-w-5xl mx-auto px-4 py-8 flex flex-col sm:flex-row justify-between items-center gap-3"
       >
-        <p>Built with Astro, TailwindCSS, and way too much caffeine ☕</p>
+        <p
+          class="text-sm"
+          style="color: rgb(var(--color-text)); opacity: 0.55;"
+        >
+          Built with Astro, TailwindCSS, and way too much caffeine ☕
+        </p>
+        <span
+          class="font-mono text-xs"
+          style="color: rgb(var(--color-primary)); opacity: 0.45;">exit 0</span
+        >
       </div>
     </footer>
   </div>

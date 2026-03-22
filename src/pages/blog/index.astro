@@ -21,8 +21,21 @@ const allTags = [...new Set(allPosts.flatMap((post) => post.data.tags))].sort();
 >
   <Header />
 
-  <main class="max-w-5xl mx-auto px-4 py-12">
-    <h1 class="text-4xl md:text-5xl font-bold mb-12">All Articles</h1>
+  <main class="max-w-5xl mx-auto px-4 py-16">
+    <div class="mb-12">
+      <p
+        class="font-mono text-sm mb-3"
+        style="color: rgb(var(--color-primary)); opacity: 0.7;"
+      >
+        $ ls ~/posts
+      </p>
+      <h1
+        class="text-4xl md:text-5xl font-extrabold"
+        style="letter-spacing: -0.03em;"
+      >
+        All Articles
+      </h1>
+    </div>
 
     <!-- Search -->
     <Search searchQuery={searchQuery} />
@@ -30,20 +43,19 @@ const allTags = [...new Set(allPosts.flatMap((post) => post.data.tags))].sort();
     <!-- Tags Filter -->
     {
       allTags.length > 0 && (
-        <div class="mb-10">
-          <h2 class="text-lg font-semibold mb-4">Filter by tag:</h2>
+        <div class="mb-12">
+          <p
+            class="text-xs font-mono mb-3"
+            style="color: rgb(var(--color-text)); opacity: 0.45;"
+          >
+            filter by tag:
+          </p>
           <div class="flex flex-wrap gap-2">
-            <a
-              href="/blog"
-              class="px-3 py-1 rounded-full border border-[rgb(var(--color-border))] hover:text-[rgb(var(--color-primary))] hover:border-[rgb(var(--color-primary))] transition-colors"
-            >
-              All
+            <a href="/blog" class="tag-active">
+              all
             </a>
             {allTags.map((tag) => (
-              <a
-                href={`/blog/tag/${tag}`}
-                class="px-3 py-1 rounded-full border border-[rgb(var(--color-border))] hover:text-[rgb(var(--color-primary))] hover:border-[rgb(var(--color-primary))] transition-colors"
-              >
+              <a href={`/blog/tag/${tag}`} class="tag">
                 {tag}
               </a>
             ))}
@@ -52,21 +64,28 @@ const allTags = [...new Set(allPosts.flatMap((post) => post.data.tags))].sort();
       )
     }
 
-    <!-- Posts Grid -->
-    <div class="grid gap-8">
+    <!-- Posts list — editorial style -->
+    <div>
       {
         allPosts.length > 0 ? (
           allPosts.map((post) => (
-            <article class="card group">
+            <article class="post-item group">
               <a href={`/blog/${post.slug}`} class="block">
-                <h2 class="text-2xl font-bold mb-4 group-hover:text-[rgb(var(--color-primary))] transition-colors">
+                <h2 class="text-xl font-bold mb-2 leading-snug group-hover:text-[rgb(var(--color-primary))] transition-colors">
                   {post.data.title}
                 </h2>
-                <p class="text-[rgb(var(--color-text))] opacity-75 mb-5 leading-relaxed">
+                <p
+                  class="text-sm mb-3 leading-relaxed"
+                  style="color: rgb(var(--color-text)); opacity: 0.62;"
+                >
                   {post.data.description}
                 </p>
-                <div class="flex flex-wrap items-center gap-4 text-sm text-[rgb(var(--color-text))] opacity-60">
-                  <time datetime={post.data.pubDate.toISOString()}>
+                <div class="flex flex-wrap items-center gap-3">
+                  <time
+                    datetime={post.data.pubDate.toISOString()}
+                    class="font-mono text-xs"
+                    style="color: rgb(var(--color-text)); opacity: 0.42;"
+                  >
                     {post.data.pubDate.toLocaleDateString("en-US", {
                       year: "numeric",
                       month: "short",
@@ -74,11 +93,9 @@ const allTags = [...new Set(allPosts.flatMap((post) => post.data.tags))].sort();
                     })}
                   </time>
                   {post.data.tags.length > 0 && (
-                    <div class="flex gap-2">
+                    <div class="flex gap-1.5 flex-wrap">
                       {post.data.tags.map((tag) => (
-                        <span class="px-2 py-1 border border-[rgb(var(--color-border))] rounded text-xs">
-                          {tag}
-                        </span>
+                        <span class="tag">{tag}</span>
                       ))}
                     </div>
                   )}
@@ -87,8 +104,11 @@ const allTags = [...new Set(allPosts.flatMap((post) => post.data.tags))].sort();
             </article>
           ))
         ) : (
-          <p class="text-slate-600 dark:text-slate-400">
-            No posts yet. Check back soon!
+          <p
+            class="py-8 font-mono text-sm"
+            style="color: rgb(var(--color-text)); opacity: 0.5;"
+          >
+            // No posts yet. Check back soon!
           </p>
         )
       }

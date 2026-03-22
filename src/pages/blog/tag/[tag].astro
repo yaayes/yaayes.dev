@@ -26,39 +26,60 @@ const allPosts = (await getCollection("posts"))
   <div data-pagefind-ignore>
     <Header />
 
-    <main class="max-w-5xl mx-auto px-4 py-12">
-      <div class="mb-8">
+    <main class="max-w-5xl mx-auto px-4 py-16">
+      <div class="mb-12">
         <a
           href="/blog"
-          class="text-[rgb(var(--color-primary))] hover:underline mb-4 inline-block"
+          class="inline-flex items-center gap-1.5 text-sm font-mono mb-6 transition-colors"
+          style="color: rgb(var(--color-text)); opacity: 0.45;"
+          onmouseover="this.style.opacity='1'; this.style.color='rgb(var(--color-primary))';"
+          onmouseout="this.style.opacity='0.45'; this.style.color='rgb(var(--color-text))';"
         >
-          ← Back to all posts
+          ← cd ..
         </a>
-        <h1 class="text-4xl md:text-5xl font-bold mb-4">
-          Posts tagged with <span class="text-[rgb(var(--color-primary))]"
-            >{tag}</span>
+        <p
+          class="font-mono text-sm mb-3"
+          style="color: rgb(var(--color-primary)); opacity: 0.7;"
+        >
+          $ grep -r "{tag}" ~/posts
+        </p>
+        <h1
+          class="text-4xl md:text-5xl font-extrabold mb-3"
+          style="letter-spacing: -0.03em;"
+        >
+          <span style="color: rgb(var(--color-primary));">{tag}</span>
         </h1>
-        <p class="text-[rgb(var(--color-text))] opacity-75">
+        <p
+          class="font-mono text-xs"
+          style="color: rgb(var(--color-text)); opacity: 0.42;"
+        >
           {allPosts.length}
-          {allPosts.length === 1 ? "post" : "posts"} found
+          {allPosts.length === 1 ? "result" : "results"} found
         </p>
       </div>
 
-      <!-- Posts Grid -->
-      <div class="grid gap-8">
+      <!-- Posts list — editorial style -->
+      <div>
         {
           allPosts.length > 0 ? (
             allPosts.map((post) => (
-              <article class="card group">
+              <article class="post-item group">
                 <a href={`/blog/${post.slug}`} class="block">
-                  <h2 class="text-2xl font-bold mb-4 group-hover:text-[rgb(var(--color-primary))] transition-colors">
+                  <h2 class="text-xl font-bold mb-2 leading-snug group-hover:text-[rgb(var(--color-primary))] transition-colors">
                     {post.data.title}
                   </h2>
-                  <p class="text-[rgb(var(--color-text))] opacity-75 mb-5 leading-relaxed">
+                  <p
+                    class="text-sm mb-3 leading-relaxed"
+                    style="color: rgb(var(--color-text)); opacity: 0.62;"
+                  >
                     {post.data.description}
                   </p>
-                  <div class="flex flex-wrap items-center gap-4 text-sm text-[rgb(var(--color-text))] opacity-60">
-                    <time datetime={post.data.pubDate.toISOString()}>
+                  <div class="flex flex-wrap items-center gap-3">
+                    <time
+                      datetime={post.data.pubDate.toISOString()}
+                      class="font-mono text-xs"
+                      style="color: rgb(var(--color-text)); opacity: 0.42;"
+                    >
                       {post.data.pubDate.toLocaleDateString("en-US", {
                         year: "numeric",
                         month: "short",
@@ -66,13 +87,13 @@ const allPosts = (await getCollection("posts"))
                       })}
                     </time>
                     {post.data.tags.length > 0 && (
-                      <div class="flex gap-2">
+                      <div class="flex gap-1.5 flex-wrap">
                         {post.data.tags.map((t) => (
                           <a
                             href={`/blog/tag/${t}`}
-                            class="px-2 py-1 border border-[rgb(var(--color-border))] rounded text-xs hover:bg-[rgb(var(--color-primary))]/10 transition-colors"
+                            class={t === tag ? "tag-active" : "tag"}
                           >
-                            #{t}
+                            {t}
                           </a>
                         ))}
                       </div>
@@ -82,8 +103,11 @@ const allPosts = (await getCollection("posts"))
               </article>
             ))
           ) : (
-            <p class="text-[rgb(var(--color-text))] opacity-75">
-              No posts found with this tag.
+            <p
+              class="py-8 font-mono text-sm"
+              style="color: rgb(var(--color-text)); opacity: 0.5;"
+            >
+              // No posts found for this tag.
             </p>
           )
         }

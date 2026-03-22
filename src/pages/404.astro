@@ -1,39 +1,61 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import Header from '../components/Header.astro';
+import Layout from "../layouts/Layout.astro";
+import Header from "../components/Header.astro";
 ---
 
-<Layout title="404 - Page Not Found" description="The page you're looking for doesn't exist">
+<Layout
+  title="404 - Page Not Found"
+  description="The page you're looking for doesn't exist"
+>
   <div data-pagefind-ignore>
-  <Header />
-  
-  <main class="max-w-3xl mx-auto px-4 py-20 text-center">
-    <div class="mb-8">
-      <span class="text-8xl mb-6 inline-block">🤔</span>
-    </div>
-    
-    <h1 class="text-5xl font-bold mb-6">404 - Page Not Found</h1>
-    
-    <p class="text-xl text-[rgb(var(--color-text))] opacity-75 mb-8 leading-relaxed">
-      Looks like this page took a wrong turn at the last deployment. 
-      Either it never existed, or it's been depreciated like that old code we all pretend doesn't exist.
-    </p>
-    
-    <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
-      <a href="/" class="btn">
-        Go Home
-      </a>
-      <a href="/blog" class="btn">
-        Browse Articles
-      </a>
-    </div>
-    
-    <div class="mt-16 p-6 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg))]">
-      <p class="text-sm text-[rgb(var(--color-text))] opacity-60">
-        <strong>Pro tip:</strong> If you think this page should exist, please check the URL for typos or 
-        <a href="/contact" class="text-[rgb(var(--color-primary))] hover:underline">let me know</a>.
+    <Header />
+
+    <main class="max-w-3xl mx-auto px-4 py-24 text-center">
+      <p
+        class="font-mono text-sm mb-6"
+        style="color: rgb(var(--color-primary)); opacity: 0.7;"
+      >
+        $ cat /dev/null
       </p>
-    </div>
-  </main>
+
+      <h1 class="text-6xl font-extrabold mb-6" style="letter-spacing: -0.04em;">
+        404
+      </h1>
+
+      <p
+        class="text-xl mb-3 leading-relaxed"
+        style="color: rgb(var(--color-text)); opacity: 0.75;"
+      >
+        Looks like this page took a wrong turn at the last deployment.
+      </p>
+      <p
+        class="text-base mb-10 leading-relaxed"
+        style="color: rgb(var(--color-text)); opacity: 0.55;"
+      >
+        Either it never existed, or it's been deprecated like that old code we
+        all pretend doesn't exist.
+      </p>
+
+      <div class="flex flex-col sm:flex-row gap-3 justify-center items-center">
+        <a href="/" class="btn">← Go Home</a>
+        <a href="/blog" class="btn-outline">Browse Articles</a>
+      </div>
+
+      <div
+        class="mt-16 p-5 rounded-lg border border-[rgb(var(--color-border))] text-left"
+      >
+        <p
+          class="font-mono text-xs"
+          style="color: rgb(var(--color-text)); opacity: 0.5;"
+        >
+          <span style="color: rgb(var(--color-primary));">pro tip:</span> check the
+          URL for typos, or <a
+            href="/contact"
+            class="underline"
+            style="color: rgb(var(--color-primary));">let me know</a
+          > if you think this page should exist.
+        </p>
+      </div>
+    </main>
   </div>
 </Layout>
