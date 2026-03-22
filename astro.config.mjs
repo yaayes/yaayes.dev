@@ -5,7 +5,7 @@ import tailwindcss from "@tailwindcss/vite";
 
 // https://astro.build/config
 export default defineConfig({
-  site: "https://yourdomain.com",
+  site: "https://yaayes.dev",
   markdown: {
     shikiConfig: {
       themes: {

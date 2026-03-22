@@ -8,11 +8,58 @@ interface Props {
   post: CollectionEntry<"posts">;
 }
 
+import { getReadingTime } from "../utils/reading-time";
+
 const { post } = Astro.props;
 const { Content } = await render(post);
+
+const slug = post.slug;
+const readingTimeStr = getReadingTime(post.body ?? "");
+const ogImagePath = `/og/${slug}.png`;
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  headline: post.data.title,
+  description: post.data.description,
+  datePublished: post.data.pubDate.toISOString(),
+  ...(post.data.updatedDate && {
+    dateModified: post.data.updatedDate.toISOString(),
+  }),
+  author: {
+    "@type": "Person",
+    name: post.data.author,
+    url: "https://yaayes.dev",
+  },
+  publisher: {
+    "@type": "Organization",
+    name: "yaayes.dev",
+    logo: {
+      "@type": "ImageObject",
+      url: "https://yaayes.dev/favicon.png",
+    },
+  },
+  image: `https://yaayes.dev${ogImagePath}`,
+  keywords: post.data.tags.join(", "),
+  mainEntityOfPage: {
+    "@type": "WebPage",
+    "@id": `https://yaayes.dev/blog/${slug}`,
+  },
+};
 ---
 
-<Layout title={post.data.title} description={post.data.description}>
+<Layout
+  title={post.data.title}
+  description={post.data.description}
+  ogImage={ogImagePath}
+  type="article"
+  publishedTime={post.data.pubDate.toISOString()}
+  modifiedTime={post.data.updatedDate?.toISOString()}
+  author={post.data.author}
+  tags={post.data.tags}
+>
+  <!-- JSON-LD structured data -->
+  <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} slot="head" />
   <!-- Reading progress bar -->
   <div id="reading-progress"></div>
 
@@ -53,13 +100,6 @@ const { Content } = await render(post);
           {post.data.title}
         </h1>
 
-        <p
-          class="text-lg mb-6 leading-relaxed"
-          style="color: rgb(var(--color-text)); opacity: 0.68;"
-        >
-          {post.data.description}
-        </p>
-
         <div
           class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-mono"
           style="color: rgb(var(--color-text)); opacity: 0.45;"
@@ -88,6 +128,7 @@ const { Content } = await render(post);
           }
 
           <span>· by {post.data.author}</span>
+          <span>· {readingTimeStr}</span>
         </div>
 
         <!-- Amber divider -->

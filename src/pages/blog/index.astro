@@ -3,6 +3,7 @@ import Layout from "../../layouts/Layout.astro";
 import Header from "../../components/Header.astro";
 import Search from "../../components/Search.astro";
 import { getCollection } from "astro:content";
+import { getReadingTime } from "../../utils/reading-time";
 
 const allPosts = (await getCollection("posts"))
   .filter((post) => !post.data.draft)
@@ -92,6 +93,9 @@ const allTags = [...new Set(allPosts.flatMap((post) => post.data.tags))].sort();
                       day: "numeric",
                     })}
                   </time>
+                  <span class="font-mono text-xs" style="color: rgb(var(--color-text)); opacity: 0.42;">
+                    · {getReadingTime(post.body ?? "")}
+                  </span>
                   {post.data.tags.length > 0 && (
                     <div class="flex gap-1.5 flex-wrap">
                       {post.data.tags.map((tag) => (
