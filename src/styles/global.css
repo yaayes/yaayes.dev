@@ -293,8 +293,12 @@
     @apply text-[rgb(var(--color-text))] font-semibold;
   }
 
-  .article-content :where(ul, ol) {
-    @apply my-6 pl-6 space-y-2;
+  .article-content :where(ul) {
+    @apply my-6 pl-6 space-y-2 list-disc;
+  }
+
+  .article-content :where(ol) {
+    @apply my-6 pl-6 space-y-2 list-decimal;
   }
 
   .article-content :where(li) {

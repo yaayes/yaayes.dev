@@ -1,0 +1,326 @@
+---
+title: "Give Your Blog Posts a Proper Social Card (Astro + Satori Edition)"
+description: "How to generate GitHub-style snapshot images for every blog post at build time using satori and resvg: no server, no Canvas API, no headless browser."
+pubDate: 2026-03-22
+author: "Yassine Sedrani"
+tags: ["astro", "seo", "tutorial", "devops", "og-image", "open-graph", "social-preview"]
+draft: false
+---
+
+You share your article on LinkedIn. Someone clicks the link. The preview card that shows up is either a blank grey box or, if you're lucky, a random screenshot of your homepage. Not great. Meanwhile GitHub previews look like this clean, information-dense snapshot: title, description, metadata, all laid out like someone actually cared.
+
+This is OG image generation. And for a static Astro blog, there's a clean way to do it at build time with no external services, no headless browsers, and no Cloudflare Worker juggling native binaries it can't run.
+
+## Why Build Time?
+
+The obvious idea is: "I'll generate images on-demand in a serverless function." Totally reasonable. The problem is that the best tool for converting SVG to PNG — `resvg` — ships as a native binary. Cloudflare Workers don't run native binaries. Lambda cold starts make every first share a sad experience. And caching logic becomes your problem.
+
+Build time sidesteps all of that. Every image is pre-generated as a static PNG during `astro build`. It gets deployed to Cloudflare Pages CDN edge alongside your HTML. Cache-Control header set to a year. Zero runtime cost, zero cold starts, instant loads.
+
+The tradeoff: you regenerate images on each deploy. For a blog, that's fine — you're deploying when you publish new posts anyway.
+
+## The Tools
+
+Two packages do the heavy lifting:
+
+- **[satori](https://github.com/vercel/satori)**: converts a JSX-like object tree (with a CSS subset) to SVG. Made by the Vercel team, designed exactly for this use case.
+- **[@resvg/resvg-js](https://github.com/yisibl/resvg-js)**: renders SVG to PNG via the Rust `resvg` library, compiled to WASM. Fast, dependency-light, works in Node.
+
+```bash
+npm install satori @resvg/resvg-js
+```
+
+You'll also need fonts. Satori doesn't bundle any — you pass font buffers explicitly. The easiest source is `@fontsource`:
+
+```bash
+npm install @fontsource/inter
+```
+
+## The Endpoint
+
+Astro static endpoints work like pages: create a file in `src/pages/`, export `getStaticPaths` to enumerate the routes, and export a `GET` handler that returns a `Response`.
+
+For per-post OG images, the route is `src/pages/og/[slug].png.ts`. The `[slug]` is your post slug, `.png` becomes the literal file extension in the output path, `.ts` tells Astro it's a TypeScript endpoint.
+
+```typescript
+// src/pages/og/[slug].png.ts
+import type { GetStaticPaths, APIRoute } from "astro";
+import { getCollection } from "astro:content";
+import satori from "satori";
+import { Resvg } from "@resvg/resvg-js";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
+// Load fonts once at module level — not inside the handler
+const fontRegular = readFileSync(
+  resolve("./node_modules/@fontsource/inter/files/inter-latin-400-normal.woff")
+);
+const fontBold = readFileSync(
+  resolve("./node_modules/@fontsource/inter/files/inter-latin-700-normal.woff")
+);
+
+export const getStaticPaths: GetStaticPaths = async () => {
+  const posts = await getCollection("posts");
+  return posts
+    .filter((post) => !post.data.draft)
+    .map((post) => ({
+      params: { slug: post.slug },
+      props: { post },
+    }));
+};
+```
+
+`getStaticPaths` tells Astro which slugs to generate. It mirrors exactly how you'd do it for `src/pages/blog/[slug].astro`. Non-draft posts only, because there's no page to link to a draft's OG image anyway.
+
+The `GET` handler receives the post as a prop, calls satori to get an SVG string, passes that to resvg to get a PNG buffer, and returns it:
+
+```typescript
+export const GET: APIRoute = async ({ props }) => {
+  const { post } = props;
+
+  const svg = await satori(/* ...your layout tree... */, {
+    width: 1200,
+    height: 630,
+    fonts: [
+      { name: "Inter", data: fontRegular, weight: 400, style: "normal" },
+      { name: "Inter", data: fontBold, weight: 700, style: "normal" },
+    ],
+  });
+
+  const resvg = new Resvg(svg, { fitTo: { mode: "width", value: 1200 } });
+  const pngBuffer = resvg.render().asPng();
+
+  return new Response(pngBuffer, {
+    headers: {
+      "Content-Type": "image/png",
+      "Cache-Control": "public, max-age=31536000, immutable",
+    },
+  });
+};
+```
+
+The `Cache-Control: immutable` header is intentional. The URL is slug-based and won't change unless the post itself changes, at which point you're redeploying anyway.
+
+## The Layout Tree
+
+This is where satori gets a little unusual. It doesn't take JSX — it takes a plain JavaScript object that looks like JSX had all the syntax stripped out. Every node is `{ type, props }`, every style is an inline object. Think of it as React's virtual DOM, written by hand.
+
+Here's the full layout for the blog post card — dark background with a dot grid, amber accent bar at the top, terminal prompt, tag pills, title+description, and a metadata footer:
+
+```typescript
+const title = post.data.title;
+const description = post.data.description ?? "";
+const tags = post.data.tags?.slice(0, 4) ?? [];
+const author = post.data.author ?? "Yassine Sedrani";
+const date = post.data.pubDate.toLocaleDateString("en-US", {
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
+
+// Pre-compute dot grid positions
+const COLS = 25;
+const ROWS = 13;
+const dotSpacing = 48;
+const dots = [];
+for (let r = 0; r < ROWS; r++) {
+  for (let c = 0; c < COLS; c++) {
+    dots.push({ x: c * dotSpacing, y: r * dotSpacing });
+  }
+}
+
+const tree = {
+  type: "div",
+  props: {
+    style: {
+      width: "1200px",
+      height: "630px",
+      backgroundColor: "#1a2236",
+      display: "flex",
+      flexDirection: "column",
+      fontFamily: "Inter",
+      position: "relative",
+      overflow: "hidden",
+    },
+    children: [
+      // Dot grid — absolutely positioned dots
+      {
+        type: "div",
+        props: {
+          style: { position: "absolute", inset: "0", display: "flex" },
+          children: dots.map(({ x, y }) => ({
+            type: "div",
+            props: {
+              style: {
+                position: "absolute",
+                left: `${x}px`,
+                top: `${y}px`,
+                width: "2px",
+                height: "2px",
+                borderRadius: "50%",
+                backgroundColor: "rgba(250, 204, 21, 0.08)",
+              },
+            },
+          })),
+        },
+      },
+
+      // Amber gradient top bar
+      {
+        type: "div",
+        props: {
+          style: {
+            position: "absolute",
+            top: "0",
+            left: "0",
+            right: "0",
+            height: "5px",
+            background: "linear-gradient(to right, #facc15, rgba(250,204,21,0.1))",
+          },
+        },
+      },
+
+      // Main content area
+      {
+        type: "div",
+        props: {
+          style: {
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            padding: "52px 64px 48px",
+            position: "relative",
+          },
+          children: [
+            // Top row: terminal prompt + tag pills
+            // ...
+            // Middle: title + description
+            // ...
+            // Bottom footer: author · date + reading time
+            // ...
+          ],
+        },
+      },
+    ],
+  },
+};
+```
+
+The dot grid is generated programmatically: compute the positions in JavaScript, map them to absolutely-positioned `div` nodes. 325 divs sounds ridiculous, but satori handles it fine and the render time is under 1 second per image.
+
+## The Gotcha You Will Definitely Hit
+
+At some point you'll want to include the terminal arrow `➜` in your design. You'll use the Unicode character directly (U+279C). It will silently disappear from the output.
+
+`➜` is in the Unicode Dingbats block. Inter doesn't cover Dingbats. Satori doesn't warn you. It just renders nothing and moves on. You'll spend a while wondering if it's a font weight issue or a color issue before realizing the character simply isn't in the font.
+
+**The fix is to render it as an inline SVG path instead of a text character.** Satori supports SVG elements natively. An SVG arrow is font-independent and renders perfectly at any resolution:
+
+```typescript
+{
+  type: "svg",
+  props: {
+    width: "22",
+    height: "22",
+    viewBox: "0 0 24 24",
+    fill: "none",
+    children: {
+      type: "path",
+      props: {
+        d: "M5 12h14M13 6l6 6-6 6",
+        stroke: "#facc15",
+        "stroke-width": "2.5",
+        "stroke-linecap": "round",
+        "stroke-linejoin": "round",
+      },
+    },
+  },
+}
+```
+
+This also applies to any emoji, icon characters, or non-latin symbols you want to use. If it's not in your loaded font files, it won't render. The reliable answer is always: use an SVG path.
+
+## Satori's CSS Subset
+
+Satori supports a subset of CSS. It runs its own layout engine (not a browser), so some properties you'd use without thinking simply don't exist:
+
+- No `display: inline-block` — only `flex`, `block`, `none`, `contents`
+- No `gap` shorthand on some node types — specify `rowGap` / `columnGap` explicitly if `gap` isn't working
+- No `background-image: url()` for external URLs — embed base64 or use `fetch` to load and inline the image data yourself
+- Gradients work, but only `linear-gradient` — `radial-gradient` support is limited
+
+When something isn't rendering, the error often says "Invalid value for CSS property X", which is at least clear. When something renders but looks wrong, check the [satori docs](https://github.com/vercel/satori) for the full supported property list.
+
+## Wiring It to the OG Meta Tags
+
+Once your endpoint is generating images at `/og/{slug}.png`, you wire it up in your blog post layout:
+
+```astro
+---
+// src/layouts/BlogPost.astro
+const slug = post.slug;
+const ogImagePath = `/og/${slug}.png`;
+---
+
+<Layout
+  title={post.data.title}
+  description={post.data.description}
+  ogImage={ogImagePath}
+  type="article"
+>
+```
+
+And in your base `Layout.astro`, build the absolute URL:
+
+```astro
+---
+const ogImageURL = ogImage
+  ? new URL(ogImage, Astro.site).href
+  : new URL("/og/default.png", Astro.site).href;
+---
+
+<meta property="og:image" content={ogImageURL} />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content={ogImageURL} />
+```
+
+Make sure `site` is set in `astro.config.mjs` — without it, `Astro.site` is undefined and the URL constructor throws:
+
+```js
+export default defineConfig({
+  site: "https://yourdomain.com",
+});
+```
+
+After `astro build`, you'll find `/dist/og/` populated with one PNG per post, ready to be served from the CDN. Open one in a browser to verify before deploying. It's just a static file; you don't need to run the dev server.
+
+## The Default Card
+
+For the homepage and any page that doesn't have a specific OG image, you want a fallback. Create `src/pages/og/default.png.ts` with the same pattern but hardcoded content — site name, tagline, whatever represents the blog as a whole. The Layout component falls back to `/og/default.png` automatically when no `ogImage` prop is passed.
+
+Same code structure, no `getStaticPaths` needed since it's a single route, no post props. Just a static `GET` handler that always returns the same image.
+
+---
+
+The whole thing generates in under 10 seconds for a 5-post blog. That time scales linearly. 50 posts is still fast enough to not care about. If you ever hit hundreds of posts and build time becomes a real concern, you can gate generation behind a check for the `PROD` environment variable and skip it locally. But you probably don't need to think about that yet.
+
+## Testing Before You Share
+
+Once deployed, don't just paste the URL into Twitter and hope. Each platform caches OG data aggressively. If something is broken, you'll be staring at a busted preview for hours while your audience already saw it.
+
+**[metatags.io](https://metatags.io)** is the first stop. Paste your URL and it renders previews for Google, Twitter/X, Facebook, LinkedIn, Slack, and Discord simultaneously, all in one page. No login, no extension, no nonsense. It's the fastest way to sanity-check the whole surface area at once.
+
+For a deeper look at individual platforms, and more importantly to **force a cache refresh** after you fix something, the official debuggers are essential:
+
+- **[Facebook / Meta Sharing Debugger](https://developers.facebook.com/tools/debug/)**: shows exactly what Facebook's crawler saw the last time it fetched your URL, lets you trigger a re-scrape, and flags malformed tags. Free, requires a Facebook account.
+- **[LinkedIn Post Inspector](https://www.linkedin.com/post-inspector/)**: same idea for LinkedIn. Paste your URL, hit Inspect, and LinkedIn re-fetches the page on the spot. Free, requires a LinkedIn account.
+- **[opengraph.xyz](https://www.opengraph.xyz)**: good for a quick raw view of what meta tags are actually being served, with a clean side-by-side preview. No login.
+
+The platform-specific debuggers matter because `summary_large_image` on Twitter and `og:image` on LinkedIn have slightly different requirements around minimum image dimensions and aspect ratios, and the generic previewers sometimes let things through that the real crawler rejects. Run both.
+
+One thing worth knowing: Facebook and LinkedIn cache aggressively. If you deploy a fix and the old broken card still shows up in the official debugger, hit the "Scrape Again" / "Inspect" button explicitly. They won't re-fetch unless you ask.
+
+Share something on Twitter and watch the card actually show up for once.
