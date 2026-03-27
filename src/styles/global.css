@@ -1,5 +1,5 @@
-@import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
+@import "tailwindcss";
 
 /* ========================================================================
    Keyframes
@@ -278,17 +278,6 @@
     line-height: 1.85;
   }
 
-  /* Links with underline accent */
-  .article-content :where(a) {
-    @apply text-[rgb(var(--color-primary))] no-underline font-medium;
-    border-bottom: 1px solid rgb(var(--color-primary) / 0.35);
-    transition: border-color 0.15s;
-  }
-
-  .article-content :where(a:hover) {
-    border-bottom-color: rgb(var(--color-primary));
-  }
-
   .article-content :where(strong) {
     @apply text-[rgb(var(--color-text))] font-semibold;
   }
@@ -345,4 +334,32 @@
   .article-content :where(tr:hover td) {
     background: rgb(var(--color-border) / 0.35);
   }
+}
+
+/* ========================================================================
+   Article links — MUST be outside @layer to override Tailwind preflight
+   ======================================================================== */
+
+.article-content a {
+  color: #b97514;
+  text-decoration: underline;
+  text-decoration-color: rgba(220, 151, 53, 0.5);
+  text-underline-offset: 3px;
+  font-weight: 500;
+  transition: color 0.15s, text-decoration-color 0.15s;
+}
+
+.dark .article-content a {
+  color: #FACC15;
+  text-decoration-color: rgba(250, 204, 21, 0.5);
+}
+
+.article-content a:hover {
+  color: #DC9735;
+  text-decoration-color: #DC9735;
+}
+
+.dark .article-content a:hover {
+  color: #eab308;
+  text-decoration-color: #eab308;
 }
